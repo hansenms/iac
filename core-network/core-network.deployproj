@@ -34,6 +34,7 @@
     <None Include="DSC\ConfigureADBDC.ps1" />
     <None Include="DSC\CreateADPDC.ps1" />
     <None Include="DSC\PrepareADBDC.ps1" />
+    <None Include="nested-templates\update-vnet-dns.json" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>
