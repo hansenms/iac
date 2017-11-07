@@ -58,13 +58,13 @@
 
         xWaitforDisk Disk2
         {
-            DiskNumber = 2
+            DiskId = 2
             RetryIntervalSec =$RetryIntervalSec
             RetryCount = $RetryCount
         }
 
         xDisk ADDataDisk {
-            DiskNumber = 2
+            DiskId = 2
             DriveLetter = "F"
             DependsOn = "[xWaitForDisk]Disk2"
         }
