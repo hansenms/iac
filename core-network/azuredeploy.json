@@ -401,8 +401,12 @@
               "10.0.0.5"
             ]
           },
-          "virtualNetworkAddressRange": "[variables('corevnetPrefix')]",
-          "subnets": "[reference(concat('Microsoft.Network/virtualNetworks/', variables('coreVnetName'))).subnets]"
+          "virtualNetworkAddressRange": {
+            "value": "[reference(concat('Microsoft.Network/virtualNetworks/', variables('coreVnetName'))).addressSpace]"
+          },
+          "subnets": {
+            "value": "[reference(concat('Microsoft.Network/virtualNetworks/', variables('coreVnetName'))).subnets]"
+          }
         }
       }
     },

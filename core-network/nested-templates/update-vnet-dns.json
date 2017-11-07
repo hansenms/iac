@@ -8,8 +8,8 @@
     "dnsServers": {
       "type": "array"
     },
-    "virtualNetworkAddressRange": {
-      "type": "string"
+    "addressSpace": {
+      "type": "object"
     },
     "subnets": {
       "type": "object"
@@ -24,11 +24,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[parameters('virtualNetworkAddressRange')]"
-          ]
-        },
+        "addressSpace": "[parameters('addressSpace')]",
         "subnets": "[parameters('subnets')]",
         "dhcpOptions": {
           "dnsServers": "[parameters('dnsServers')]"
