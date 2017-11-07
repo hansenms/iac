@@ -293,7 +293,7 @@
         "settings": {
           "Name": "[parameters('domainName')]",
           "OUPath": "",
-          "User": "[concat(arameters('domainName'), '\\', parameters('adminUserName'))]",
+          "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
           "Restart": "true",
           "Options": "3"
         },
