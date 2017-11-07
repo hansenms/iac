@@ -6,7 +6,7 @@
       "type": "string"
     },
     "dnsServers": {
-      "type": "object"
+      "type": "array"
     },
     "addressSpace": {
       "type": "object"
