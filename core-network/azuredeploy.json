@@ -198,7 +198,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', 'corevnet')]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]"
       ],
       "tags": {
         "displayName": "[variables('adBDCNICName')]"
@@ -401,8 +401,8 @@
               "10.0.0.5"
             ]
           },
-          "addressSpace": "[reference(variables('coreVnetName')).addressSpace]",
-          "subnets": "[reference(variables('coreVnetName')).subnets]"
+          "virtualNetworkAddressRange": "[variables('corevnetPrefix')]",
+          "subnets": "[reference(concat('Microsoft.Network/virtualNetworks/', variables('coreVnetName'))).subnets]"
         }
       }
     },
