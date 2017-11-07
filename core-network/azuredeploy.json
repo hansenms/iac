@@ -401,7 +401,7 @@
               "10.0.0.5"
             ]
           },
-          "virtualNetworkAddressRange": {
+          "addressSpace": {
             "value": "[reference(concat('Microsoft.Network/virtualNetworks/', variables('coreVnetName'))).addressSpace]"
           },
           "subnets": {
