@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "tfsIpAddress": {
+      "value": "10.0.1.10"
+    },
+    "tfsVmSize": {
+      "value": "Standard_D3_v2"
+    },
+    "subnetId": {
+      "value": "/subscriptions/21436343-f5d5-4cb3-9bc3-8a1ea0c7879a/resourceGroups/iac-core-network/providers/Microsoft.Network/virtualNetworks/corevnet/subnets/Subnet-2"
+    }
+  }
+}
