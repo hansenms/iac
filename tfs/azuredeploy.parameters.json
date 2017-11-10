@@ -10,6 +10,9 @@
     },
     "subnetId": {
       "value": "/subscriptions/21436343-f5d5-4cb3-9bc3-8a1ea0c7879a/resourceGroups/iac-core-network/providers/Microsoft.Network/virtualNetworks/corevnet/subnets/Subnet-2"
+    },
+    "tfsSqlIpAddress": {
+      "value": "10.0.1.11"
     }
   }
 }
