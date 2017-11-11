@@ -47,8 +47,7 @@ configuration TFSSQLServerDsc
         {
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
-            LoginCredential = $Admincreds
-			SQLServer = $env:COMPUTERNAME
+			SQLServer = "$env:COMPUTERNAME,1433"
 			SQLInstanceName = $env:COMPUTERNAME
         }
 		
