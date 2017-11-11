@@ -43,12 +43,22 @@ configuration TFSSQLServerDsc
 	        DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
-        xSqlServerLogin AddDomainAdminAccountToSysadminServerRole
+        xSqlServerLogin AddDomainAdminAccountToSqlServer
         {
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
 			SQLServer = "$env:COMPUTERNAME,1433"
 			SQLInstanceName = $env:COMPUTERNAME
+        }
+
+		xSqlServerRole AddDomainAdminAccountToSysAdmin
+        {
+			Ensure = "Present"
+            MembersToInclude = $DomainCreds.UserName
+            ServerRoleName = "sysadmin"
+			SQLServer = "$env:COMPUTERNAME,1433"
+			SQLInstanceName = $env:COMPUTERNAME
+			DependsOn = "[xSqlServerLogin]AddDomainAdminAccountToSqlServer"
         }
 		
         LocalConfigurationManager 
