@@ -14,11 +14,23 @@ configuration TFSSQLServerDsc
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xActiveDirectory, xSQLServer, xSQLps
+    Import-DscResource -ModuleName xComputerManagement, xNetworking, xActiveDirectory, xSQLServer, xSQLps
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
 
     Node localhost
     {
+		xFirewall DatabaseEngineFirewallRule
+        {
+            Direction = "Inbound"
+            Name = "SQL-Server-Database-Engine-TCP-In"
+            DisplayName = "SQL Server Database Engine (TCP-In)"
+            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Engine."
+            Group = "SQL Server"
+            Enabled = "True"
+            Protocol = "TCP"
+            LocalPort = "1433"
+            Ensure = "Present"
+        }
 
         WindowsFeature ADPS
         {
