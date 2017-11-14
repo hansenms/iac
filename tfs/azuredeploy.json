@@ -74,6 +74,32 @@
       ],
       "defaultValue": "Standard_D4_v2"
     },
+    "tfsAgentVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_D2_v2"
+    },
     "artifactBaseUrl": {
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/hansenms/iac/master/"
@@ -92,7 +118,12 @@
     "SQLConfigModulesURL": "[concat(parameters('artifactBaseUrl'),'/tfs/DSC/TFSSQLServerConfig.ps1.zip')]",
     "SQLServerConfigurationFunction": "TFSSQLServerConfig.ps1\\TFSSQLServerDsc",
     "TFSConfigModulesURL": "[concat(parameters('artifactBaseUrl'),'/tfs/DSC/InstallTFS.ps1.zip')]",
-    "TFSConfigurationFunction": "InstallTFS.ps1\\TFSInstallDsc"
+    "TFSConfigurationFunction": "InstallTFS.ps1\\TFSInstallDsc",
+    "TFSVS2017AgentVmName": "VS2017Agent",
+    "TFSVS2017AgentNicName": "VS2017Nic",
+    "VSImagePublisher": "MicrosoftVisualStudio",
+    "VSImageOffer": "VisualStudio",
+    "VSImageSku": "VS-2017-Ent-Latest-WS2016"
   },
   "resources": [
     {
@@ -300,7 +331,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('tfsVmName'),'/InstallTFS')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('tfsSqlVmName'),'/ConfigureSqlServer'))]"
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsSqlVmName')), '/extensions/ConfigureSqlServer')]"
       ],
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
@@ -324,6 +355,96 @@
           "items": {
             "adminPassword": "[parameters('adminPassword')]"
           }
+        }
+      }
+    },
+    {
+      "name": "[variables('TFSVS2017AgentNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "tags": {
+        "displayName": "[variables('TFSVS2017AgentNicName')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "dynamic",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('TFSVS2017AgentVmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('TFSVS2017AgentNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('tfsAgentVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('TFSVS2017AgentVmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('VSImagePublisher')]",
+            "offer": "[variables('VSImageOffer')]",
+            "sku": "[variables('VSImageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('TFSVS2017AgentNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('TFSVS2017AgentVmName'),'/joindomain')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('TFSVS2017AgentVmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "Name": "[parameters('domainName')]",
+          "OUPath": "",
+          "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
+          "Restart": "true",
+          "Options": "3"
+        },
+        "protectedSettings": {
+          "Password": "[parameters('adminPassword')]"
         }
       }
     }
