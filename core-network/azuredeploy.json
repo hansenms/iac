@@ -78,7 +78,7 @@
     "corevnetDCSubnetPrefix": "10.0.0.0/24",
     "corevnetDevOpsSubnetName": "Subnet-2",
     "corevnetDevOpsSubnetPrefix": "10.0.1.0/24",
-    "jumpNICVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'corevnet')]",
+    "jumpNICVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
     "jumpNICSubnetRef": "[concat(variables('jumpNICVnetID'), '/subnets/', variables('corevnetDevOpsSubnetName'))]",
     "ADSubnetRef": "[concat(variables('jumpNICVnetID'), '/subnets/', variables('corevnetDCSubnetName'))]",
     "jumpIPName": "JumpIP",

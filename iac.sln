@@ -7,6 +7,8 @@ Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "core-network", "core-networ
 EndProject
 Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "tfs", "tfs\tfs.deployproj", "{AB7FA7AA-097F-47E5-9FE4-76C448E49A51}"
 EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "devnet-tfs", "devnet-tfs\devnet-tfs.deployproj", "{0BFEA84A-EDD5-4729-80F3-143CB3F8EF72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{AB7FA7AA-097F-47E5-9FE4-76C448E49A51}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB7FA7AA-097F-47E5-9FE4-76C448E49A51}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB7FA7AA-097F-47E5-9FE4-76C448E49A51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BFEA84A-EDD5-4729-80F3-143CB3F8EF72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BFEA84A-EDD5-4729-80F3-143CB3F8EF72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BFEA84A-EDD5-4729-80F3-143CB3F8EF72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BFEA84A-EDD5-4729-80F3-143CB3F8EF72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,235 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "EnterpriseAdmin"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "devnet.contoso.us"
+    },
+    "jumpBoxVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_D2_v2"
+    },
+    "DCVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_D1_v2"
+    },
+    "tfsVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_D2_v2"
+    },
+    "tfsSqlVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_D4_v2"
+    },
+    "tfsAgentVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_D2_v2"
+    },
+    "artifactBaseUrl": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/hansenms/iac/master/"
+    }
+  },
+  "variables": {
+    "coreNetworkTemplateUri": "[concat(parameters('artifactBaseUrl'),'/core-network/azuredeploy.json')]",
+    "tfsTemplateUri": "[concat(parameters('artifactBaseUrl'),'/tfs/azuredeploy.json')]",
+    "coreVnetName": "corevnet",
+    "corevnetDevOpsSubnetName": "Subnet-2",
+    "vnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
+    "devopsdubnetid": "[concat(variables('vnetid'), '/subnets/', variables('corevnetDevOpsSubnetName'))]",
+  },
+  "resources": [
+    {
+      "name": "core-network",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('coreNetworkTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "jumpBoxVmSize": {
+            "value": "[parameters('jumpBoxVmSize')]"
+          },
+          "DCVmSize": {
+            "value": "[parameters('DCVmSize')]"
+          },
+          "artifactBaseUrl": {
+            "value": "[parameters('artifactBaseUrl')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "tfs",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/core-network"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tfsTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "subnetId": {
+            "value": "[variables('devopsdubnetid')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "tfsVmSize": {
+            "value": "[parameters('tfsVmSize')]"
+          },
+          "tfsSqlVmSize": {
+            "value": "[parameters('tfsSqlVmSize')]"
+          },
+          "tfsAgentVmSize": {
+            "value": "[parameters('tfsAgentVmSize')]"
+          },
+          "artifactBaseUrl": {
+            "value": "[parameters('artifactBaseUrl')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
