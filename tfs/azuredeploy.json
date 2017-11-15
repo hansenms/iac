@@ -123,7 +123,9 @@
     "TFSVS2017AgentNicName": "VS2017Nic",
     "VSImagePublisher": "MicrosoftVisualStudio",
     "VSImageOffer": "VisualStudio",
-    "VSImageSku": "VS-2017-Ent-Latest-WS2016"
+    "VSImageSku": "VS-2017-Ent-Latest-WS2016",
+    "VSTSAgentConfigModulesURL": "[concat(parameters('artifactBaseUrl'),'/tfs/DSC/InstallVSTSAgent.ps1.zip')]",
+    "VSTSAgentConfigurationFunction": "InstallVSTSAgent.ps1\\VSTSAgentInstallDsc"
   },
   "resources": [
     {
@@ -445,6 +447,37 @@
         },
         "protectedSettings": {
           "Password": "[parameters('adminPassword')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('TFSVS2017AgentVmName'),'/InstallVSTSAgent')]",
+      "dependsOn": [
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsVmName')), '/extensions/InstallTFS')]"
+      ],
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesURL": "[variables('VSTSAgentConfigModulesURL')]",
+          "configurationFunction": "[variables('VSTSAgentConfigurationFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "privateSettingsRef:adminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
         }
       }
     }

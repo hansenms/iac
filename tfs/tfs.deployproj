@@ -33,6 +33,7 @@
     <Content Include="Deploy-AzureResourceGroup.ps1" />
     <None Include="DSC\basic.ini" />
     <None Include="DSC\InstallTFS.ps1" />
+    <None Include="DSC\InstallVSTSAgent.ps1" />
     <None Include="DSC\TFSSQLServerConfig.ps1" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
