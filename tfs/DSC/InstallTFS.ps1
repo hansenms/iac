@@ -11,10 +11,25 @@ configuration TFSInstallDsc
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     
-    Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
+    Import-DscResource -ModuleName  xStorage, 'PSDesiredStateConfiguration'
 	    
     Node localhost
-    {                
+    {   
+		
+		xWaitforDisk Disk2
+        {
+                DiskId = 2
+                RetryIntervalSec =$RetryIntervalSec
+                RetryCount = $RetryCount
+        }
+
+        xDisk ADDataDisk
+        {
+            DiskId = 2
+            DriveLetter = "F"
+            DependsOn = "[xWaitForDisk]Disk2"
+        }
+
         Script DownloadTFS
         {
             GetScript = { 
@@ -31,6 +46,7 @@ configuration TFSInstallDsc
                 $installer = "$env:TEMP" + "\tfs_installer.exe"
                 Test-Path $installer
             }
+			DependsOn = "[xDisk]ADDataDisk"
         }
 
         Script InstallTFS
