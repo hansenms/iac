@@ -197,6 +197,7 @@
               "lun": 0,
               "createOption": "Empty"
             }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
