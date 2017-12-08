@@ -30,6 +30,9 @@
             "name": "[parameters('nicName')]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpName'))]"
+            ],
             "apiVersion": "2016-03-30",
             "properties": {
                 "ipConfigurations": [
