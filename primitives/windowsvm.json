@@ -131,8 +131,12 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
-                    "nicName": "[variables('nicName')]",
-                    "subnetId": "[parameters('subnetId')]"
+                    "nicName": {
+                        "value:": "[variables('nicName')]"
+                    },
+                    "subnetId": {
+                        "value": "[parameters('subnetId')]"
+                    }
                 }
             }
         },
