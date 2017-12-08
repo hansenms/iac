@@ -34,15 +34,54 @@
             "type": "string",
             "defaultValue": "null"
         },
+        "assignPublicIP": {
+            "type": "bool",
+            "defaultValue": false
+        },
+        "dataDiskSize": {
+            "type": "int",
+            "defaultValue": 1023
+        },
+        "numberOfDataDisks": {
+            "type": "int",
+            "minValue": 0,
+            "maxValue": 4,
+            "defaultValue": 1
+        },
         "encryptionConfiguration": {
             "type": "object",
             "defaultValue": {}
         }
     },
     "variables": {
+        "vnetTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'vnet.json')]",
+        "encryptTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'encryptvm.json')]",
+        "publicipTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'publicip.json')]",
         "nicName": "[concat(parameters('vmName'),'-nic')]",
         "genDiagStorageAccountName": "[concat('vmdiag',uniquestring(subscription().subscriptionId))]",
-        "diagStorageAccountId": "[if(equals(parameters('diagStorageAccountId'),'null'), resourceId('Microsoft.Storage/storageAccounts/', variables('genDiagStorageAccountName')),parameters('diagStorageAccountId'))]"
+        "diagStorageAccountId": "[if(equals(parameters('diagStorageAccountId'),'null'), resourceId('Microsoft.Storage/storageAccounts/', variables('genDiagStorageAccountName')),parameters('diagStorageAccountId'))]",
+        "dataDisks": [
+            {
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": 0,
+                "createOption": "Empty"
+            },
+            {
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": 1,
+                "createOption": "Empty"
+            },
+            {
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": 2,
+                "createOption": "Empty"
+            },
+            {
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": 3,
+                "createOption": "Empty"
+            }
+        ]
     },
     "resources": [
         {
@@ -62,21 +101,39 @@
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
             "apiVersion": "2016-03-30",
-            "tags": {
-                "displayName": "[variables('nicName')]"
-            },
             "properties": {
                 "ipConfigurations": [
                     {
                         "name": "ipconfig1",
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
+                            "privateIPAddress": "",
                             "subnet": {
                                 "id": "[parameters('subnetId')]"
                             }
                         }
                     }
                 ]
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "publicIpTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "condition": "[parameters('assignPublicIP')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('publicipTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "nicName": "[variables('nicName')]",
+                    "subnetId": "[parameters('subnetId')]"
+                }
             }
         },
         {
@@ -106,7 +163,8 @@
                     },
                     "osDisk": {
                         "createOption": "FromImage"
-                    }
+                    },
+                    "dataDisks": "[take(variables('dataDisks'),parameters('numberOfDataDisks'))]"
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -131,7 +189,7 @@
         },
         "subnetId": {
             "type": "string",
-            "value":  "[parameters('subnetId')]"
+            "value": "[parameters('subnetId')]"
         }
     }
 }
