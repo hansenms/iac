@@ -3,7 +3,8 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "subnetId": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "null"
         },
         "vmName": {
             "type": "string"
@@ -59,6 +60,7 @@
         "publicipTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'publicip.json')]",
         "nicName": "[concat(parameters('vmName'),'-nic')]",
         "genDiagStorageAccountName": "[concat('vmdiag',uniquestring(subscription().subscriptionId))]",
+        "genVnetName": "[concat(parameters('vmName'),'-vnet')]",
         "diagStorageAccountId": "[if(equals(parameters('diagStorageAccountId'),'null'), resourceId('Microsoft.Storage/storageAccounts/', variables('genDiagStorageAccountName')),parameters('diagStorageAccountId'))]",
         "dataDisks": [
             {
@@ -97,9 +99,25 @@
             "properties": {}
         },
         {
+            "apiVersion": "2017-05-10",
+            "name": "[variables('genVnetName')]",
+            "type": "Microsoft.Resources/deployments",
+            "condition": "[equals(parameters('subnetId'),'null')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vnetTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                }
+            }
+        },
+        {
             "name": "[variables('nicName')]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('genVnetName'))]"
+            ],
             "apiVersion": "2016-03-30",
             "properties": {
                 "ipConfigurations": [
@@ -109,7 +127,7 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "privateIPAddress": "",
                             "subnet": {
-                                "id": "[parameters('subnetId')]"
+                                "id": "[if(equals(parameters('subnetId'),'null'), reference(resourceId('Microsoft.Resources/deployments', variable('genVnetName)),'2016-09-01').outputs.subnets[0].Id,parameters('subnetId'))]"
                             }
                         }
                     }
@@ -118,7 +136,7 @@
         },
         {
             "apiVersion": "2017-05-10",
-            "name": "publicIpTemplate",
+            "name": "[concat(parameters('vmName'),'-publicip')]",
             "type": "Microsoft.Resources/deployments",
             "condition": "[parameters('assignPublicIP')]",
             "dependsOn": [
