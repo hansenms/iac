@@ -121,8 +121,9 @@
             "name": "publicIpTemplate",
             "type": "Microsoft.Resources/deployments",
             "condition": "[parameters('assignPublicIP')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines',parameters('vmName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
