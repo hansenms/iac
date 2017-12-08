@@ -127,7 +127,7 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "privateIPAddress": "",
                             "subnet": {
-                                "id": "[if(equals(parameters('subnetId'),'null'), reference(resourceId('Microsoft.Resources/deployments', variable('genVnetName)),'2016-09-01').outputs.subnets[0].Id,parameters('subnetId'))]"
+                                "id": "[if(equals(parameters('subnetId'),'null'),  reference(resourceId('Microsoft.Resources/deployments', variables('genVnetName')),'2016-09-01').outputs.subnets[0].Id, parameters('subnetId'))]"
                             }
                         }
                     }
