@@ -116,7 +116,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[if(equals(parameters('subnetId'),'null'),  resourceId('Microsoft.network/virtualNetworks', 'vnet'),'')]"
+                "[if(equals(parameters('subnetId'),'null'),  resourceId('Microsoft.network/virtualNetworks', 'vnet'), parameters('subnetId'))]"
             ],
             "apiVersion": "2016-03-30",
             "properties": {
