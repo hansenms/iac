@@ -64,6 +64,9 @@
         "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
         "genSubnetId": "[concat(variables('genVnetid'), '/subnets/default')]",
         "subnetId": "[if(equals(parameters('subnetId'),'null'), variables('genSubnetId'), parameters('subnetId'))]",
+        "nicDependenciesGenNet": "[createArray(variables('genVnetId'))]",
+        "emptyArray": [],
+        "nicDependencies": "[if(equals(parameters('subnetId'),'null'), variables('nicDependenciesGenNet'), variables('emptyArray'))]",
         "dataDisks": [
             {
                 "diskSizeGB": "[parameters('dataDiskSize')]",
@@ -128,6 +131,9 @@
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
             "apiVersion": "2016-03-30",
+            "dependsOn": [
+                "[variables('nicDependencies')]"
+            ],
             "properties": {
                 "ipConfigurations": [
                     {
