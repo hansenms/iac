@@ -55,13 +55,15 @@
         }
     },
     "variables": {
-        "vnetTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'vnet.json')]",
         "encryptTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'encryptvm.json')]",
         "publicipTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'publicip.json')]",
         "nicName": "[concat(parameters('vmName'),'-nic')]",
         "genDiagStorageAccountName": "[concat('vmdiag', uniqueString( resourceGroup().id, deployment().name ))]",
         "genVnetName": "[concat(parameters('vmName'),'-vnet')]",
         "diagStorageAccountId": "[if(equals(parameters('diagStorageAccountId'),'null'), resourceId('Microsoft.Storage/storageAccounts/', variables('genDiagStorageAccountName')),parameters('diagStorageAccountId'))]",
+        "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
+        "genSubnetId": "[concat(variables('genVnetid'), '/subnets/default')]",
+        "subnetId": "[if(equals(parameters('subnetId'),'null'), variables('genSubnetId'), parameters('subnetId'))]",
         "dataDisks": [
             {
                 "diskSizeGB": "[parameters('dataDiskSize')]",
@@ -99,16 +101,26 @@
             "properties": {}
         },
         {
-            "apiVersion": "2017-05-10",
             "name": "[variables('genVnetName')]",
-            "type": "Microsoft.Resources/deployments",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
             "condition": "[equals(parameters('subnetId'),'null')]",
+            "dependsOn": [],
             "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('vnetTemplateUrl')]",
-                    "contentVersion": "1.0.0.0"
-                }
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "properties" : {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    }
+                ]
             }
         },
         {
@@ -124,7 +136,7 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "privateIPAddress": "",
                             "subnet": {
-                                "id": "[if(equals(parameters('subnetId'),'null'), '', parameters('subnetId'))]"
+                                "id": "[variables('subnetId')]"
                             }
                         }
                     }
@@ -241,7 +253,7 @@
         },
         "subnetId": {
             "type": "string",
-            "value": "[if(equals(parameters('subnetId'),'null'),  reference(resourceId('Microsoft.Resources/deployments', variables('genVnetName')),'2016-09-01').outputs.subnets.value[0].id, parameters('subnetId'))]"
+            "value": "[variables('subnetId')]"
         }
     }
 }
