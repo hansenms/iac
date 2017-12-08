@@ -131,9 +131,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
             "apiVersion": "2016-03-30",
-            "dependsOn": [
-                "[variables('nicDependencies')]"
-            ],
+            "dependsOn":  "[variables('nicDependencies')]",
             "properties": {
                 "ipConfigurations": [
                     {
