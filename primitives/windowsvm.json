@@ -161,8 +161,7 @@
             "name": "[parameters('vmName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-                "[variables('diagStorageAccountId')]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
