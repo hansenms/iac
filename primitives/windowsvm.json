@@ -121,7 +121,6 @@
             "name": "publicIpTemplate",
             "type": "Microsoft.Resources/deployments",
             "condition": "[parameters('assignPublicIP')]",
-            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines',parameters('vmName'))]"
             ],
