@@ -132,7 +132,7 @@
                 },
                 "parameters": {
                     "nicName": {
-                        "value:": "[variables('nicName')]"
+                        "value": "[variables('nicName')]"
                     },
                     "subnetId": {
                         "value": "[parameters('subnetId')]"
