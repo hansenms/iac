@@ -59,7 +59,7 @@
         "encryptTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'encryptvm.json')]",
         "publicipTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'publicip.json')]",
         "nicName": "[concat(parameters('vmName'),'-nic')]",
-        "genDiagStorageAccountName": "[concat('vmdiag',uniquestring(subscription().subscriptionId))]",
+        "genDiagStorageAccountName": "[concat('vmdiag', uniqueString( resourceGroup().id, deployment().name ))]",
         "genVnetName": "[concat(parameters('vmName'),'-vnet')]",
         "diagStorageAccountId": "[if(equals(parameters('diagStorageAccountId'),'null'), resourceId('Microsoft.Storage/storageAccounts/', variables('genDiagStorageAccountName')),parameters('diagStorageAccountId'))]",
         "dataDisks": [
