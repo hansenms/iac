@@ -153,7 +153,7 @@
                         "value": "[variables('nicName')]"
                     },
                     "subnetId": {
-                        "value": "[parameters('subnetId')]"
+                        "value": "[if(equals(parameters('subnetId'),'null'),  reference(resourceId('Microsoft.Resources/deployments', variables('genVnetName')),'2016-09-01').outputs.subnets.value[0].id, parameters('subnetId'))]"
                     }
                 }
             }
@@ -211,7 +211,7 @@
         },
         "subnetId": {
             "type": "string",
-            "value": "[parameters('subnetId')]"
+            "value": "[if(equals(parameters('subnetId'),'null'),  reference(resourceId('Microsoft.Resources/deployments', variables('genVnetName')),'2016-09-01').outputs.subnets.value[0].id, parameters('subnetId'))]"
         }
     }
 }
