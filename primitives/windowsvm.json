@@ -39,6 +39,10 @@
             "type": "bool",
             "defaultValue": false
         },
+        "fixedPrivateIp": {
+            "type": "string",
+            "defaultValue": ""
+        },
         "dataDiskSize": {
             "type": "int",
             "defaultValue": 1023
@@ -55,18 +59,16 @@
         }
     },
     "variables": {
-        "encryptTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'encryptvm.json')]",
-        "publicipTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'publicip.json')]",
+        "encryptTemplateUrl": "http://github.com/encryptvm.json",
+        "publicipTemplateUrl": "http://github.com/publicip.json",
         "nicName": "[concat(parameters('vmName'),'-nic')]",
         "genDiagStorageAccountName": "[concat('vmdiag', uniqueString( resourceGroup().id, deployment().name ))]",
+        "genStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts/', variables('genDiagStorageAccountName'))]",
         "genVnetName": "[concat(parameters('vmName'),'-vnet')]",
-        "diagStorageAccountId": "[if(equals(parameters('diagStorageAccountId'),'null'), resourceId('Microsoft.Storage/storageAccounts/', variables('genDiagStorageAccountName')),parameters('diagStorageAccountId'))]",
+        "diagStorageAccountId": "[if(equals(parameters('diagStorageAccountId'),'null'), variables('genStorageAccountId'), parameters('diagStorageAccountId'))]",
         "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
         "genSubnetId": "[concat(variables('genVnetid'), '/subnets/default')]",
         "subnetId": "[if(equals(parameters('subnetId'),'null'), variables('genSubnetId'), parameters('subnetId'))]",
-        "nicDependenciesGenNet": "[createArray(variables('genVnetId'))]",
-        "emptyArray": [],
-        "nicDependencies": "[if(equals(parameters('subnetId'),'null'), variables('nicDependenciesGenNet'), variables('emptyArray'))]",
         "dataDisks": [
             {
                 "diskSizeGB": "[parameters('dataDiskSize')]",
@@ -131,14 +133,16 @@
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
             "apiVersion": "2016-03-30",
-            "dependsOn":  "[variables('nicDependencies')]",
+            "dependsOn":  [
+                "[variables('genVnetid')]"
+            ],
             "properties": {
                 "ipConfigurations": [
                     {
                         "name": "ipconfig1",
                         "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "privateIPAddress": "",
+                            "privateIPAllocationMethod": "[if(empty(parameters('fixedPrivateIp')), 'Dynamic', 'Static')]",
+                            "privateIPAddress": "[parameters('fixedPrivateIp')]",
                             "subnet": {
                                 "id": "[variables('subnetId')]"
                             }
@@ -177,7 +181,8 @@
             "name": "[parameters('vmName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+                "[variables('genStorageAccountId')]"
             ],
             "properties": {
                 "hardwareProfile": {
