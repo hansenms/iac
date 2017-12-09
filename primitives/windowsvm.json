@@ -2,22 +2,22 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "subnetId": {
-            "type": "string",
-            "defaultValue": "null"
-        },
         "vmName": {
             "type": "string"
-        },
-        "vmSize": {
-            "type": "string",
-            "defaultValue": "Standard_D2"
         },
         "adminUsername": {
             "type": "string"
         },
         "adminPassword": {
             "type": "securestring"
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2"
+        },
+        "subnetId": {
+            "type": "string",
+            "defaultValue": "null"
         },
         "imagePublisher": {
             "type": "string",
@@ -56,6 +56,10 @@
         "encryptionConfiguration": {
             "type": "object",
             "defaultValue": {}
+        },
+        "availabilitySetId": {
+            "type": "string",
+            "defaultValue": ""
         }
     },
     "variables": {
@@ -69,6 +73,9 @@
         "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
         "genSubnetId": "[concat(variables('genVnetid'), '/subnets/default')]",
         "subnetId": "[if(equals(parameters('subnetId'),'null'), variables('genSubnetId'), parameters('subnetId'))]",
+        "availabilitySetId": {
+            "id": "[parameters('availabilitySetId')]"
+        },
         "dataDisks": [
             {
                 "diskSizeGB": "[parameters('dataDiskSize')]",
@@ -185,6 +192,7 @@
                 "[variables('genStorageAccountId')]"
             ],
             "properties": {
+                "availabilitySet": "[if(not(empty(parameters('availabilitySetId'))), variables('availabilitySetId'), json('null'))]",
                 "hardwareProfile": {
                     "vmSize": "[parameters('vmSize')]"
                 },
