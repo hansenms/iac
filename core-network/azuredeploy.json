@@ -81,7 +81,7 @@
     "adPDCVMName": "DC1",
     "adBDCVMName": "DC2",
     "DCHASetName": "DCHASet",
-    "baseUri": "[if(not(contains(deployment().properties, 'templateLink')),'https://raw.githubusercontent.com/hansenms/iac/core-primitives/core-network/azuredeploy.json',deployment().properties.templateLink.uri)]",
+    "baseUri": "[deployment().properties.templateLink.uri]",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
     "adPDCModulesURL": "[uri(variables('baseUri'),'DSC/CreateADPDC.ps1.zip')]",
     "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
