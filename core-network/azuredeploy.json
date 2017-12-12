@@ -64,10 +64,6 @@
         "Standard_DS15_v2"
       ],
       "defaultValue": "Standard_D1_v2"
-    },
-    "artifactBaseUrl": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/hansenms/iac/master/"
     }
   },
   "variables": {
@@ -81,20 +77,18 @@
     "jumpNICVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
     "jumpNICSubnetRef": "[concat(variables('jumpNICVnetID'), '/subnets/', variables('corevnetDevOpsSubnetName'))]",
     "ADSubnetRef": "[concat(variables('jumpNICVnetID'), '/subnets/', variables('corevnetDCSubnetName'))]",
-    "jumpIPName": "JumpIP",
-    "jumpNICName": "JumpNIC",
     "jumpVMName": "JumpBox",
     "adPDCVMName": "DC1",
-    "adPDCNICName": "DC1NIC",
     "adBDCVMName": "DC2",
-    "adBDCNICName": "DC2NIC",
     "DCHASetName": "DCHASet",
     "windowsOSVersion": "2016-Datacenter",
-    "adPDCModulesURL": "[concat(parameters('artifactBaseUrl'),'/core-network/DSC/CreateADPDC.ps1.zip')]",
+    "baseUri": "[if(empty(deployment().properties.templateLink),'https://raw.githubusercontent.com/hansenms/iac/primitives/core-network/azuredeploy.json',deployment().properties.templateLink.uri)]",
+    "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+    "adPDCModulesURL": "[uri(variables('baseUri'),'DSC/CreateADPDC.ps1.zip')]",
     "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-    "adBDCModulesURL": "[concat(parameters('artifactBaseUrl'),'/core-network/DSC/ConfigureADBDC.ps1.zip')]",
+    "adBDCModulesURL": "[uri(variables('baseUri'),'DSC/ConfigureADBDC.ps1.zip')]",
     "adBDCConfigurationFunction": "ConfigureADBDC.ps1\\ConfigureADBDC",
-    "vnetwithDNSTemplateUri": "[concat(parameters('artifactBaseUrl'),'/core-network/nested-templates/update-vnet-dns.json')]"
+    "vnetwithDNSTemplateUri": "[uri(variables('baseUri'),'nested-templates/update-vnet-dns.json')]"
   },
   "resources": [
     {
@@ -114,9 +108,6 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [],
-      "tags": {
-        "displayName": "corevnet"
-      },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -140,139 +131,204 @@
       }
     },
     {
-      "name": "[variables('jumpNICName')]",
-      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('DCHASetName')]",
+      "type": "Microsoft.Compute/availabilitySets",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', 'corevnet')]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('jumpIPName'))]"
-      ],
-      "tags": {
-        "displayName": "jumpNIC"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[variables('jumpNICSubnetRef')]"
-              },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('jumpIPName'))]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "[variables('adPDCNICName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', 'corevnet')]"
-      ],
-      "tags": {
-        "displayName": "[variables('adPDCNICName')]"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "subnet": {
-                "id": "[variables('ADSubnetRef')]"
-              },
-              "privateIPAddress": "10.0.0.4"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "[variables('adBDCNICName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]"
-      ],
-      "tags": {
-        "displayName": "[variables('adBDCNICName')]"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "subnet": {
-                "id": "[variables('ADSubnetRef')]"
-              },
-              "privateIPAddress": "10.0.0.5"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "[variables('jumpIPName')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-03-30",
       "dependsOn": [],
       "tags": {
-        "displayName": "jumpIP"
+        "displayName": "DCHASet"
       },
       "properties": {
-        "publicIPAllocationMethod": "Dynamic"
+        "platformUpdateDomainCount": 3,
+        "platformFaultDomainCount": 5
+      },
+      "sku": {
+        "name": "Aligned"
       }
     },
     {
-      "apiVersion": "2017-03-30",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('jumpVMName')]",
-      "location": "[resourceGroup().location]",
+      "name": "DC1Deploy",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('jumpNICName'))]",
-        "Microsoft.Resources/deployments/UpdateVNetDNS"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
       ],
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('jumpBoxVmSize')]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('windowsVmTemplateURL')]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computerName": "[variables('jumpVMName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "[variables('windowsOSVersion')]",
-            "version": "latest"
+        "parameters": {
+          "vmName": {
+            "value": "[variables('adPDCVMName')]"
           },
-          "osDisk": {
-            "createOption": "FromImage"
+          "vmSize": {
+            "value": "[parameters('DCVmSize')]"
+          },
+          "subnetId": {
+            "value": "[variables('ADSubnetRef')]"
+          },
+          "staticPrivateIp": {
+            "value": "10.0.0.4"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "diagStorageAccountId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+          },
+          "availabilitySetId": {
+            "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('DCHASetName'))]"
+          }
+        }
+      }
+    },
+    {
+      "name": "DC2Deploy",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('windowsVmTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[variables('adBDCVMName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('DCVmSize')]"
+          },
+          "subnetId": {
+            "value": "[variables('ADSubnetRef')]"
+          },
+          "staticPrivateIp": {
+            "value": "10.0.0.5"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "diagStorageAccountId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+          },
+          "availabilitySetId": {
+            "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('DCHASetName'))]"
+          }
+        }
+      }
+    },
+    {
+      "name": "JumpDeploy",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+        "Microsoft.Resources/deployments/UpdateVNetDNS"        
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('windowsVmTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[variables('jumpVMName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('jumpBoxVmSize')]"
+          },          
+          "subnetId": {
+            "value": "[variables('jumpNICSubnetRef')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "diagStorageAccountId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+          },
+          "assignPublicIP": {
+            "value": true
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('adPDCVMName'),'/CreateADForest')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'DC1Deploy')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.19",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "ModulesUrl": "[variables('adPDCModulesURL')]",
+          "ConfigurationFunction": "[variables('adPDCConfigurationFunction')]",
+          "Properties": {
+            "DomainName": "[parameters('domainName')]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUserName')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            }
           }
         },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('jumpNICName'))]"
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('adPDCVMName'),'/ConfigureADBDC')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'DC2Deploy')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.19",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "ModulesUrl": "[variables('adBDCModulesURL')]",
+          "ConfigurationFunction": "[variables('adBDCConfigurationFunction')]",
+          "Properties": {
+            "DomainName": "[parameters('domainName')]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUserName')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
             }
-          ]
+          }
         },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
           }
         }
       }
@@ -283,7 +339,7 @@
       "name": "[concat(variables('jumpVMName'),'/joindomain')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('jumpVMName'))]"
+        "[concat('Microsoft.Resources/deployments', 'JumpDeploy')]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -301,110 +357,6 @@
           "Password": "[parameters('adminPassword')]"
         }
       }
-    },
-    {
-      "name": "[variables('DCHASetName')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "DCHASet"
-      },
-      "properties": {
-        "platformUpdateDomainCount": 1,
-        "platformFaultDomainCount": 1
-      },
-      "sku": {
-        "name": "Aligned"
-      }
-    },
-    {
-      "apiVersion": "2017-03-30",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('adPDCVMName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('adPDCNICName'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets/', variables('DCHASetName'))]"
-      ],
-      "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets/', variables('DCHASetName'))]"
-        },
-        "hardwareProfile": {
-          "vmSize": "[parameters('DCVmSize')]"
-        },
-        "osProfile": {
-          "computerName": "[variables('adPDCVMName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "[variables('windowsOSVersion')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "diskSizeGB": 1023,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNICName'))]"
-            }
-          ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
-          }
-        }
-      },
-      "resources": [
-        {
-          "name": "CreateADForest",
-          "type": "extensions",
-          "apiVersion": "2016-03-30",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('adPDCVMName'))]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.19",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "ModulesUrl": "[variables('adPDCModulesURL')]",
-              "ConfigurationFunction": "[variables('adPDCConfigurationFunction')]",
-              "Properties": {
-                "DomainName": "[parameters('domainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUserName')]",
-                  "Password": "PrivateSettingsRef:AdminPassword"
-                }
-              }
-            },
-            "protectedSettings": {
-              "Items": {
-                "AdminPassword": "[parameters('adminPassword')]"
-              }
-            }
-          }
-        }
-      ]
     },
     {
       "name": "UpdateVNetDNS",
@@ -437,94 +389,6 @@
           }
         }
       }
-    },
-    {
-      "apiVersion": "2017-03-30",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('adBDCVMName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('adBDCNICName'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets/', variables('DCHASetName'))]",
-        "Microsoft.Resources/deployments/UpdateVNetDNS"
-      ],
-      "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets/', variables('DCHASetName'))]"
-        },
-        "hardwareProfile": {
-          "vmSize": "[parameters('DCVmSize')]"
-        },
-        "osProfile": {
-          "computerName": "[variables('adBDCVMName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "[variables('windowsOSVersion')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "diskSizeGB": 1023,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('adBDCNICName'))]"
-            }
-          ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
-          }
-        }
-      },
-      "resources": [
-        {
-          "name": "ConfigureADBDC",
-          "type": "extensions",
-          "apiVersion": "2016-03-30",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('adBDCVMName'))]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.19",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "ModulesUrl": "[variables('adBDCModulesURL')]",
-              "ConfigurationFunction": "[variables('adBDCConfigurationFunction')]",
-              "Properties": {
-                "DomainName": "[parameters('domainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUserName')]",
-                  "Password": "PrivateSettingsRef:AdminPassword"
-                }
-              }
-            },
-            "protectedSettings": {
-              "Items": {
-                "AdminPassword": "[parameters('adminPassword')]"
-              }
-            }
-          }
-        }
-      ]
     }
   ],
   "outputs": {}
