@@ -82,7 +82,7 @@
     "adBDCVMName": "DC2",
     "DCHASetName": "DCHASet",
     "windowsOSVersion": "2016-Datacenter",
-    "baseUri": "[if(empty(deployment().properties.templateLink),'https://raw.githubusercontent.com/hansenms/iac/primitives/core-network/azuredeploy.json',deployment().properties.templateLink.uri)]",
+    "baseUri": "https://raw.githubusercontent.com/hansenms/iac/core-primitives/core-network/azuredeploy.json",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
     "adPDCModulesURL": "[uri(variables('baseUri'),'DSC/CreateADPDC.ps1.zip')]",
     "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
@@ -140,8 +140,8 @@
         "displayName": "DCHASet"
       },
       "properties": {
-        "platformUpdateDomainCount": 3,
-        "platformFaultDomainCount": 5
+        "platformUpdateDomainCount": 2,
+        "platformFaultDomainCount": 2
       },
       "sku": {
         "name": "Aligned"
@@ -150,7 +150,7 @@
     {
       "name": "DC1Deploy",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-05-10",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
@@ -171,7 +171,7 @@
           "subnetId": {
             "value": "[variables('ADSubnetRef')]"
           },
-          "staticPrivateIp": {
+          "fixedPrivateIp": {
             "value": "10.0.0.4"
           },
           "adminUsername": {
@@ -192,10 +192,11 @@
     {
       "name": "DC2Deploy",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-05-10",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"        
       ],
       "properties": {
         "mode": "Incremental",
@@ -213,7 +214,7 @@
           "subnetId": {
             "value": "[variables('ADSubnetRef')]"
           },
-          "staticPrivateIp": {
+          "fixedPrivateIp": {
             "value": "10.0.0.5"
           },
           "adminUsername": {
@@ -234,11 +235,11 @@
     {
       "name": "JumpDeploy",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-05-10",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
-        "Microsoft.Resources/deployments/UpdateVNetDNS"        
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"        
       ],
       "properties": {
         "mode": "Incremental",
@@ -305,10 +306,11 @@
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('adPDCVMName'),'/ConfigureADBDC')]",
+      "name": "[concat(variables('adBDCVMName'),'/ConfigureADBDC')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'DC2Deploy')]"
+        "[resourceId('Microsoft.Resources/deployments', 'DC2Deploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"                
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -339,7 +341,7 @@
       "name": "[concat(variables('jumpVMName'),'/joindomain')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments', 'JumpDeploy')]"
+        "[resourceId('Microsoft.Resources/deployments', 'JumpDeploy')]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -361,7 +363,7 @@
     {
       "name": "UpdateVNetDNS",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-05-10",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('adPDCVMName'),'/extensions/CreateADForest')]"
       ],
