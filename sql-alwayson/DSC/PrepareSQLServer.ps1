@@ -94,7 +94,7 @@ configuration SQLServerPrepareDsc
             ServerRoleName = "sysadmin"
 			ServerName = "$env:COMPUTERNAME,1433"
 			InstanceName = $env:COMPUTERNAME
-			DependsOn = "[xSqlServerLogin]AddDomainAdminAccountToSqlServer"
+			DependsOn = "[SqlServerLogin]AddDomainAdminAccountToSqlServer"
         }
 
         LocalConfigurationManager 
