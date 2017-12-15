@@ -69,12 +69,15 @@
       "defaultValue": "Standard_DS2_v2"
     },
     "sqlVmImagePublisher": {
+      "type": "string",
       "defaultValue": "MicrosoftSqlServer"
     },
     "sqlVmImageOffer": {
+      "type": "string",
       "defaultValue": "SQL2017-WS2016"
     },
     "sqlVmImageSku": {
+      "type": "string",
       "defaultValue": "Enterprise"
     }
   },
@@ -83,7 +86,7 @@
     "HASetName": "SqlHASet",
     "sqlwName": "SqlWitness",
     "SqlVmPrefix": "SQL",
-    "baseUri": "https://raw.githubusercontent.com/hansenms/iac/core-primitives/devnet-tfs/azuredeploy.json",
+    "baseUri": "https://raw.githubusercontent.com/hansenms/iac/core-primitives/sql-alwayson/azuredeploy.json",
     "SQLPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLServer.ps1.zip')]",
     "SQLPrepareFunction": "PrepareSQLServer.ps1\\SQLServerPrepareDsc",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]"
@@ -261,7 +264,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/configuresql')]",
       "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex()), '/extensions/joindomain')]"
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex())), '/extensions/joindomain')]"
       ],
       "apiVersion": "2016-03-30",
       "copy": {
