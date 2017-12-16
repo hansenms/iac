@@ -88,17 +88,18 @@ configuration SQLServerPrepareDsc
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
         {
-			ServerName = "$env:COMPUTERNAME,1433"
-			InstanceName = $env:COMPUTERNAME
+			ServerName = "$env:COMPUTERNAME"
+			InstanceName = "MSSQLSERVER"
             ProcessOnlyOnActiveNode = $true
             Type                    = 'Data'
-            Path                    = 'C:\Data'
+            Path                    = 'F:\Data'
+            RestartService          = $true
         }
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Log
         {
-			ServerName = "$env:COMPUTERNAME,1433"
-			InstanceName = $env:COMPUTERNAME
+			ServerName = "$env:COMPUTERNAME"
+			InstanceName = "MSSQLSERVER"
             ProcessOnlyOnActiveNode = $true
             Type                    = 'Log'
             Path                    = 'F:\Log'
@@ -107,8 +108,8 @@ configuration SQLServerPrepareDsc
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Backup
         {
-			ServerName = "$env:COMPUTERNAME,1433"
-			InstanceName = $env:COMPUTERNAME
+			ServerName = "$env:COMPUTERNAME"
+			InstanceName = "MSSQLSERVER"
             ProcessOnlyOnActiveNode = $true
             Type                    = 'Backup'
             Path                    = 'F:\Backup'
@@ -119,9 +120,8 @@ configuration SQLServerPrepareDsc
         {
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
-			ServerName = "$env:COMPUTERNAME,1433"
-			InstanceName = $env:COMPUTERNAME
-            RestartService          = $true
+			ServerName = "$env:COMPUTERNAME"
+			InstanceName = "MSSQLSERVER"
         }
 
 		SqlServerRole AddDomainAdminAccountToSysAdmin
@@ -129,16 +129,16 @@ configuration SQLServerPrepareDsc
 			Ensure = "Present"
             MembersToInclude = $DomainCreds.UserName
             ServerRoleName = "sysadmin"
-			ServerName = "$env:COMPUTERNAME,1433"
-			InstanceName = $env:COMPUTERNAME
+			ServerName = "$env:COMPUTERNAME"
+			InstanceName = "MSSQLSERVER"
 			DependsOn = "[SqlServerLogin]AddDomainAdminAccountToSqlServer"
         }
 
         #TODO: We should create a dedicated user for this.
         SqlServiceAccount SetServiceAcccount_User
         {
-			ServerName = "$env:COMPUTERNAME,1433"
-			InstanceName = $env:COMPUTERNAME
+			ServerName = "$env:COMPUTERNAME"
+			InstanceName = "MSSQLSERVER"
             ServiceType    = 'DatabaseEngine'
             ServiceAccount = $DomainCreds
             RestartService = $true
