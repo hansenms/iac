@@ -91,7 +91,7 @@ configuration SQLServerPrepareDsc
             DestinationPath = "F:\Data"
             Type = "Directory"
             Ensure = "Present"
-            DependsOn = "[xDisk]ADDataDisk"
+            DependsOn = "[SqlServiceAccount]SetServiceAcccount_User"
         }
 
         File DataReadme
@@ -108,7 +108,7 @@ configuration SQLServerPrepareDsc
             DestinationPath = "F:\Log"
             Type = "Directory"
             Ensure = "Present"
-            DependsOn = "[xDisk]ADDataDisk"
+            DependsOn = "[SqlServiceAccount]SetServiceAcccount_User"
         }
 
         File LogReadme
@@ -120,6 +120,14 @@ configuration SQLServerPrepareDsc
             DependsOn = "[File]LogFolder"
         }
 
+        File BackupFolder
+        {
+            DestinationPath = "F:\Backup"
+            Type = "Directory"
+            Ensure = "Present"
+            DependsOn = "[SqlServiceAccount]SetServiceAcccount_User"
+        }
+
         File BackupReadme
         {
             DestinationPath = "F:\Backup\README.txt"
@@ -127,14 +135,6 @@ configuration SQLServerPrepareDsc
             Type = "File"
             Ensure = "Present"
             DependsOn = "[File]BackupFolder"
-        }
-
-        File BackupFolder
-        {
-            DestinationPath = "F:\Backup"
-            Type = "Directory"
-            Ensure = "Present"
-            DependsOn = "[xDisk]ADDataDisk"
         }
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
@@ -196,6 +196,7 @@ configuration SQLServerPrepareDsc
             ServiceType    = 'DatabaseEngine'
             ServiceAccount = $DomainCreds
             RestartService = $true
+            DependsOn = "[xDisk]ADDataDisk"
         }
 
         LocalConfigurationManager 
