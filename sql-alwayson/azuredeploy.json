@@ -89,6 +89,8 @@
     "baseUri": "https://raw.githubusercontent.com/hansenms/iac/core-primitives/sql-alwayson/azuredeploy.json",
     "SQLPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLServer.ps1.zip')]",
     "SQLPrepareFunction": "PrepareSQLServer.ps1\\SQLServerPrepareDsc",
+    "WitnessPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLWitness.ps1.zip')]",
+    "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",    
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]"
   },
   "resources": [
@@ -280,6 +282,37 @@
         "settings": {
           "modulesURL": "[variables('SQLPrepareModuleURL')]",
           "configurationFunction": "[variables('SQLPrepareFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "privateSettingsRef:adminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('sqlwName'), '/configurewitness')]",
+      "dependsOn": [
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('sqlwName')), '/extensions/joindomain')]"
+      ],
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesURL": "[variables('WitnessPrepareModuleURL')]",
+          "configurationFunction": "[variables('WitnessPrepareFunction')]",
           "properties": {
             "domainName": "[parameters('domainName')]",
             "adminCreds": {
