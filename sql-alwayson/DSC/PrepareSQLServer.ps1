@@ -91,6 +91,7 @@ configuration SQLServerPrepareDsc
             DestinationPath = "F:\Data"
             Type = "Directory"
             Ensure = "Present"
+            DependsOn = "[xDisk]ADDataDisk"
         }
 
         File LogFolder
@@ -98,6 +99,7 @@ configuration SQLServerPrepareDsc
             DestinationPath = "F:\Log"
             Type = "Directory"
             Ensure = "Present"
+            DependsOn = "[xDisk]ADDataDisk"
         }
 
         File BackupFolder
@@ -105,6 +107,7 @@ configuration SQLServerPrepareDsc
             DestinationPath = "F:\Backup"
             Type = "Directory"
             Ensure = "Present"
+            DependsOn = "[xDisk]ADDataDisk"
         }
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
