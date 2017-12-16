@@ -79,12 +79,49 @@ configuration SQLServerPrepareDsc
             Ensure = "Present"
         }
 
+        <#TODO: Add user for running SQL server.
+        xADUser SvcUser
+        {
+
+        }
+        #>
+
+        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
+        {
+			ServerName = "$env:COMPUTERNAME,1433"
+			InstanceName = $env:COMPUTERNAME
+            ProcessOnlyOnActiveNode = $true
+            Type                    = 'Data'
+            Path                    = 'C:\Data'
+        }
+
+        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Log
+        {
+			ServerName = "$env:COMPUTERNAME,1433"
+			InstanceName = $env:COMPUTERNAME
+            ProcessOnlyOnActiveNode = $true
+            Type                    = 'Log'
+            Path                    = 'F:\Log'
+            RestartService          = $true
+        }
+
+        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Backup
+        {
+			ServerName = "$env:COMPUTERNAME,1433"
+			InstanceName = $env:COMPUTERNAME
+            ProcessOnlyOnActiveNode = $true
+            Type                    = 'Backup'
+            Path                    = 'F:\Backup'
+            RestartService          = $true
+        }
+
         SqlServerLogin AddDomainAdminAccountToSqlServer
         {
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
 			ServerName = "$env:COMPUTERNAME,1433"
 			InstanceName = $env:COMPUTERNAME
+            RestartService          = $true
         }
 
 		SqlServerRole AddDomainAdminAccountToSysAdmin
@@ -95,6 +132,16 @@ configuration SQLServerPrepareDsc
 			ServerName = "$env:COMPUTERNAME,1433"
 			InstanceName = $env:COMPUTERNAME
 			DependsOn = "[SqlServerLogin]AddDomainAdminAccountToSqlServer"
+        }
+
+        #TODO: We should create a dedicated user for this.
+        SqlServiceAccount SetServiceAcccount_User
+        {
+			ServerName = "$env:COMPUTERNAME,1433"
+			InstanceName = $env:COMPUTERNAME
+            ServiceType    = 'DatabaseEngine'
+            ServiceAccount = $DomainCreds
+            RestartService = $true
         }
 
         LocalConfigurationManager 
