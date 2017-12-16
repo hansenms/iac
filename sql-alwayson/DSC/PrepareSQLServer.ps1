@@ -86,6 +86,27 @@ configuration SQLServerPrepareDsc
         }
         #>
 
+        File DataFolder
+        {
+            DestinationPath = "F:\Data"
+            Type = "Directory"
+            Ensure = "Present"
+        }
+
+        File LogFolder
+        {
+            DestinationPath = "F:\Log"
+            Type = "Directory"
+            Ensure = "Present"
+        }
+
+        File BackupFolder
+        {
+            DestinationPath = "F:\Backup"
+            Type = "Directory"
+            Ensure = "Present"
+        }
+
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
         {
 			ServerName = "$env:COMPUTERNAME"
@@ -94,6 +115,7 @@ configuration SQLServerPrepareDsc
             Type                    = 'Data'
             Path                    = 'F:\Data'
             RestartService          = $true
+            DependsOn = "[File]DataFolder"
         }
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Log
@@ -104,6 +126,7 @@ configuration SQLServerPrepareDsc
             Type                    = 'Log'
             Path                    = 'F:\Log'
             RestartService          = $true
+            DependsOn = "[File]LogFolder"
         }
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Backup
@@ -114,6 +137,7 @@ configuration SQLServerPrepareDsc
             Type                    = 'Backup'
             Path                    = 'F:\Backup'
             RestartService          = $true
+            DependsOn = "[File]BackupFolder"
         }
 
         SqlServerLogin AddDomainAdminAccountToSqlServer
