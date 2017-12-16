@@ -46,3 +46,27 @@ configuration SQLWitnessPrepareDsc
     }
 
 }
+
+function Get-NetBIOSName
+{ 
+    [OutputType([string])]
+    param(
+        [string]$DomainName
+    )
+
+    if ($DomainName.Contains('.')) {
+        $length=$DomainName.IndexOf('.')
+        if ( $length -ge 16) {
+            $length=15
+        }
+        return $DomainName.Substring(0,$length)
+    }
+    else {
+        if ($DomainName.Length -gt 15) {
+            return $DomainName.Substring(0,15)
+        }
+        else {
+            return $DomainName
+        }
+    }
+}

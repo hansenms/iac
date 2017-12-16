@@ -94,12 +94,39 @@ configuration SQLServerPrepareDsc
             DependsOn = "[xDisk]ADDataDisk"
         }
 
+        File DataReadme
+        {
+            DestinationPath = "F:\Data\README.txt"
+            Contents = "This folder is for SQL Databases"
+            Type = "File"
+            Ensure = "Present"
+            DependsOn = "[File]DataFolder"
+        }
+
         File LogFolder
         {
             DestinationPath = "F:\Log"
             Type = "Directory"
             Ensure = "Present"
             DependsOn = "[xDisk]ADDataDisk"
+        }
+
+        File LogReadme
+        {
+            DestinationPath = "F:\Log\README.txt"
+            Contents = "This folder is for SQL logs"
+            Type = "File"
+            Ensure = "Present"
+            DependsOn = "[File]LogFolder"
+        }
+
+        File BackupReadme
+        {
+            DestinationPath = "F:\Backup\README.txt"
+            Contents = "This folder is for SQL backups"
+            Type = "File"
+            Ensure = "Present"
+            DependsOn = "[File]BackupFolder"
         }
 
         File BackupFolder
@@ -118,7 +145,7 @@ configuration SQLServerPrepareDsc
             Type                    = 'Data'
             Path                    = 'F:\Data'
             RestartService          = $true
-            DependsOn = "[File]DataFolder"
+            DependsOn = "[File]DataReadme"
         }
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Log
@@ -129,7 +156,7 @@ configuration SQLServerPrepareDsc
             Type                    = 'Log'
             Path                    = 'F:\Log'
             RestartService          = $true
-            DependsOn = "[File]LogFolder"
+            DependsOn = "[File]LogReadme"
         }
 
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Backup
@@ -140,7 +167,7 @@ configuration SQLServerPrepareDsc
             Type                    = 'Backup'
             Path                    = 'F:\Backup'
             RestartService          = $true
-            DependsOn = "[File]BackupFolder"
+            DependsOn = "[File]BackupReadme"
         }
 
         SqlServerLogin AddDomainAdminAccountToSqlServer
