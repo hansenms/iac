@@ -266,7 +266,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/prepareesql')]",
+      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/preparesql')]",
       "dependsOn": [
         "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex())), '/extensions/joindomain')]"
       ],
