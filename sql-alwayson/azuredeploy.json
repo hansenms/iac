@@ -89,8 +89,6 @@
     "baseUri": "https://raw.githubusercontent.com/hansenms/iac/core-primitives/sql-alwayson/azuredeploy.json",
     "SQLPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLServer.ps1.zip')]",
     "SQLPrepareFunction": "PrepareSQLServer.ps1\\SQLServerPrepareDsc",
-    "SQLConfigureModuleURL": "[uri(variables('baseUri'), 'DSC/ConfigureSQLServer.ps1.zip')]",
-    "SQLConfigureFunction": "ConfigureSQLServer.ps1\\SQLServerConfigureDsc",
     "WitnessPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLWitness.ps1.zip')]",
     "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",    
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]"
@@ -266,7 +264,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/preparesql')]",
+      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/configuresql')]",
       "dependsOn": [
         "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex())), '/extensions/joindomain')]"
       ],
@@ -283,30 +281,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "modulesURL": "[variables('SQLPrepareModuleURL')]",
-          "configurationFunction": "[variables('SQLPrepareFunction')]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/configuresql')]",
-      "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex())), '/extensions/preparesql')]"
-      ],
-      "apiVersion": "2016-03-30",
-      "copy": {
-        "name": "sqlconfigloop",
-        "count": 2
-      },
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "modulesURL": "[variables('SQLConfigureModuleURL')]",
-          "configurationFunction": "[variables('SQLConfigureFunction')]",
+          "configurationFunction": "[variables('SQLPrepareFunction')]",
           "properties": {
             "domainName": "[parameters('domainName')]",
             "adminCreds": {
