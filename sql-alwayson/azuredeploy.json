@@ -89,6 +89,8 @@
     "baseUri": "https://raw.githubusercontent.com/hansenms/iac/core-primitives/sql-alwayson/azuredeploy.json",
     "SQLPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLServer.ps1.zip')]",
     "SQLPrepareFunction": "PrepareSQLServer.ps1\\SQLServerPrepareDsc",
+    "SQLConfigModuleURL": "[uri(variables('baseUri'), 'DSC/ConfigureSQLServer.ps1.zip')]",
+    "SQLConfigFunction": "ConfigureSQLServer.ps1\\SQLServerConfigureDsc",
     "WitnessPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLWitness.ps1.zip')]",
     "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",    
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]"

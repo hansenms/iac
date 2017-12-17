@@ -2,20 +2,11 @@ configuration SQLServerPrepareDsc
 {
     param
     (
-        [Parameter(Mandatory)]
-        [String]$DomainName,
-
-		[String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$Admincreds,
-
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xNetworking, xActiveDirectory, xStorage, SqlServerDsc
-    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
+    Import-DscResource -ModuleName xComputerManagement, xNetworking, xStorage
 
     Node localhost
     {
@@ -72,26 +63,12 @@ configuration SQLServerPrepareDsc
             Ensure = "Present"
         }
 
-
-        WindowsFeature ADPS
-        {
-            Name = "RSAT-AD-PowerShell"
-            Ensure = "Present"
-        }
-
-        <#TODO: Add user for running SQL server.
-        xADUser SvcUser
-        {
-
-        }
-        #>
-
         File DataFolder
         {
             DestinationPath = "F:\Data"
             Type = "Directory"
             Ensure = "Present"
-            DependsOn = "[SqlServiceAccount]SetServiceAcccount_User"
+            DependsOn = "[xDisk]ADDataDisk"
         }
 
         File DataReadme
@@ -108,7 +85,7 @@ configuration SQLServerPrepareDsc
             DestinationPath = "F:\Log"
             Type = "Directory"
             Ensure = "Present"
-            DependsOn = "[SqlServiceAccount]SetServiceAcccount_User"
+            DependsOn = "[xDisk]ADDataDisk"
         }
 
         File LogReadme
@@ -125,7 +102,7 @@ configuration SQLServerPrepareDsc
             DestinationPath = "F:\Backup"
             Type = "Directory"
             Ensure = "Present"
-            DependsOn = "[SqlServiceAccount]SetServiceAcccount_User"
+            DependsOn = "[xDisk]ADDataDisk"
         }
 
         File BackupReadme
@@ -135,68 +112,6 @@ configuration SQLServerPrepareDsc
             Type = "File"
             Ensure = "Present"
             DependsOn = "[File]BackupFolder"
-        }
-
-        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ProcessOnlyOnActiveNode = $true
-            Type                    = 'Data'
-            Path                    = 'F:\Data'
-            RestartService          = $true
-            DependsOn = "[File]DataReadme"
-        }
-
-        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Log
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ProcessOnlyOnActiveNode = $true
-            Type                    = 'Log'
-            Path                    = 'F:\Log'
-            RestartService          = $true
-            DependsOn = "[File]LogReadme"
-        }
-
-        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Backup
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ProcessOnlyOnActiveNode = $true
-            Type                    = 'Backup'
-            Path                    = 'F:\Backup'
-            RestartService          = $true
-            DependsOn = "[File]BackupReadme"
-        }
-
-        SqlServerLogin AddDomainAdminAccountToSqlServer
-        {
-            Name = $DomainCreds.UserName
-            LoginType = "WindowsUser"
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-        }
-
-		SqlServerRole AddDomainAdminAccountToSysAdmin
-        {
-			Ensure = "Present"
-            MembersToInclude = $DomainCreds.UserName
-            ServerRoleName = "sysadmin"
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-			DependsOn = "[SqlServerLogin]AddDomainAdminAccountToSqlServer"
-        }
-
-        #TODO: We should create a dedicated user for this.
-        SqlServiceAccount SetServiceAcccount_User
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ServiceType    = 'DatabaseEngine'
-            ServiceAccount = $DomainCreds
-            RestartService = $true
-            DependsOn = "[xDisk]ADDataDisk"
         }
 
         LocalConfigurationManager 
