@@ -128,8 +128,37 @@ configuration SQLServerPrepareDsc
                 DependsOn                     = "[WindowsFeature]FCPSCMD"
             }
 
-        } else {
+            SqlAlwaysOnService EnableAlwaysOn
+            {
+                Ensure               = 'Present'
+                ServerName           = $env:COMPUTERNAME
+                InstanceName         = 'MSSQLSERVER'
+                RestartTimeout       = 120
+                DependsOn = "[xCluster]CreateCluster"
+            }
 
+            # Create a DatabaseMirroring endpoint
+            SqlServerEndpoint HADREndpoint
+            {
+                EndPointName         = 'HADR'
+                Ensure               = 'Present'
+                Port                 = 5022
+                ServerName           = $env:COMPUTERNAME
+                InstanceName         = 'MSSQLSERVER'
+                DependsOn            = "[SqlAlwaysOnService]EnableAlwaysOn"
+            }
+
+            # Create the availability group on the instance tagged as the primary replica
+            SqlAG AddTestAG
+            {
+                Ensure               = "Present"
+                Name                 = "AGDefault"
+                ServerName           = $env:COMPUTERNAME
+                InstanceName         = 'MSSQLSERVER'
+                DependsOn            = "[SqlServerEndpoint]HADREndpoint"
+            }
+
+        } else {
             xWaitForCluster WaitForCluster
             {
                 Name             = $ClusterName
@@ -159,6 +188,37 @@ configuration SQLServerPrepareDsc
                 PsDscRunAsCredential = $DomainCreds
             }
 
+            SqlAlwaysOnService EnableAlwaysOn
+            {
+                Ensure               = 'Present'
+                ServerName           = $env:COMPUTERNAME
+                InstanceName         = 'MSSQLSERVER'
+                RestartTimeout       = 120
+                DependsOn = "[Script]JoinExistingCluster"
+            }
+
+              # Create a DatabaseMirroring endpoint
+              SqlServerEndpoint HADREndpoint
+              {
+                  EndPointName         = 'HADR'
+                  Ensure               = 'Present'
+                  Port                 = 5022
+                  ServerName           = $env:COMPUTERNAME
+                  InstanceName         = 'MSSQLSERVER'
+                  DependsOn            = "[SqlAlwaysOnService]EnableAlwaysOn"
+              }
+    
+               # Add the availability group replica to the availability group
+                SqlAGReplica AddReplica
+                {
+                    Ensure                     = 'Present'
+                    Name                       = $env:COMPUTERNAME
+                    AvailabilityGroupName      = "AGDefault"
+                    ServerName                 = $env:COMPUTERNAME
+                    InstanceName               = 'MSSQLSERVER'
+                    PrimaryReplicaServerName   = $ClusterOwnerNode
+                    PrimaryReplicaInstanceName = 'MSSQLSERVER'
+                }
         }
 
         <#TODO: Add user for running SQL server.
