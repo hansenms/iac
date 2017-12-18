@@ -10,11 +10,21 @@ configuration SQLServerPrepareDsc
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds,
 
+        [Parameter(Mandatory=$true)]
+        [String]$ClusterName,
+
+        [Parameter(Mandatory=$true)]
+        [String]$ClusterIP,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet('primary','secondary')]
+        [String]$Role = "primary",
+
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xNetworking, xActiveDirectory, xStorage, SqlServerDsc
+    Import-DscResource -ModuleName xComputerManagement, xNetworking, xActiveDirectory, xStorage, xFailoverCluster, SqlServerDsc
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
 
     Node localhost
@@ -89,6 +99,14 @@ configuration SQLServerPrepareDsc
         {
             Name = "RSAT-Clustering-PowerShell"
             Ensure = "Present"
+            DependsOn = "[WindowsFeature]FailoverClusterTools"
+        }
+
+        WindowsFeature FCPSCMD
+        {
+            Ensure    = 'Present'
+            Name      = 'RSAT-Clustering-CmdInterface'
+            DependsOn = '[WindowsFeature]FCPS'
         }
 
         WindowsFeature ADPS
@@ -96,6 +114,37 @@ configuration SQLServerPrepareDsc
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
         }
+
+
+        if ($Role -eq "primary") {
+            xCluster CreateCluster
+            {
+                Name                          = $ClusterName
+                StaticIPAddress               = $ClusterIP
+                DomainAdministratorCredential = $DomainCreds
+                DependsOn                     = "[WindowsFeature]FCPSCMD"
+            }
+
+        } else {
+
+            xWaitForCluster WaitForCluster
+            {
+                Name             = $ClusterName
+                RetryIntervalSec = 10
+                RetryCount       = 60
+                DependsOn        = "[WindowsFeature]FCPSCMD"
+            }
+
+
+            xCluster CreateCluster
+            {
+                Name                          = $ClusterName
+                StaticIPAddress               = $ClusterIP
+                DomainAdministratorCredential = $DomainCreds
+                DependsOn                     = "[xWaitForCluster]WaitForCluster"
+            }
+        }
+
 
         <#TODO: Add user for running SQL server.
         xADUser SvcUser
