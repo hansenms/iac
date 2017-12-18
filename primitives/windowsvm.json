@@ -60,6 +60,10 @@
         "availabilitySetId": {
             "type": "string",
             "defaultValue": ""
+        },
+        "LoadBalancerBEId": {
+            "type": "string",
+            "defaultValue": ""
         }
     },
     "variables": {
@@ -76,6 +80,11 @@
         "availabilitySetId": {
             "id": "[parameters('availabilitySetId')]"
         },
+        "loadBalancerBEIds": [
+            {
+                "id": "[parameters('LoadBalancerBEId')]"
+            }
+        ],
         "dataDisks": [
             {
                 "diskSizeGB": "[parameters('dataDiskSize')]",
@@ -152,7 +161,8 @@
                             "privateIPAddress": "[parameters('fixedPrivateIp')]",
                             "subnet": {
                                 "id": "[variables('subnetId')]"
-                            }
+                            },
+                            "loadBalancerBackendAddressPools": "[if(not(empty(parameters('LoadBalancerBEId'))),variables('loadBalancerBEIds'),json('null'))]"
                         }
                     }
                 ]

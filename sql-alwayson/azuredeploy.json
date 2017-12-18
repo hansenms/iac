@@ -95,10 +95,19 @@
     "SQLPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLServer.ps1.zip')]",
     "SQLPrepareFunction": "PrepareSQLServer.ps1\\SQLServerPrepareDsc",
     "WitnessPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLWitness.ps1.zip')]",
-    "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",    
+    "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
-    "sqlRoles": ["primary", "secondary"],
-    "LBName": "SQLLB"
+    "sqlRoles": [
+      "primary",
+      "secondary"
+    ],
+    "LBName": "SQLLB",
+    "LBBEName": "[concat(variables('LBName'),'BE')]",
+    "LBFEName": "[concat(variables('LBName'),'FE')]",
+    "LBProbeName": "[concat(variables('LBName'),'Probe')]",
+    "sqlBEAddressPoolID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/backendAddressPools/',variables('LBBEName'))]",
+    "sqllbFEConfigID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/frontendIPConfigurations/',variables('LBFEName'))]",
+    "sqllbProbeID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/probes/',variables('LBProbeName'))]"
   },
   "resources": [
     {
@@ -165,15 +174,77 @@
       }
     },
     {
+      "name": "[variables('LBName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('LBFEName')]",
+            "properties": {
+              "privateIPAddress": "[parameters('clusterIpAddress')]",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('LBBEName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "SQLLBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sqllbFEConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('sqlBEAddressPoolID')]"
+              },
+              "probe": {
+                "id": "[variables('sqllbProbeID')]"
+              },
+              "frontendPort": 1433,
+              "backendPort": 1433,
+              "enableFloatingIP": true,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "loadDistribution": "Default"
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('LBProbeName')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 59999,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "[concat('SqlVmDeploy', copyindex())]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2017-05-10",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('LBName'))]"
       ],
-      "copy": {  
+      "copy": {
         "name": "sqlvmloop",
-        "count": 2        
+        "count": 2
       },
       "properties": {
         "mode": "Incremental",
@@ -211,6 +282,9 @@
           },
           "imageSku": {
             "value": "[parameters('sqlVmImageSku')]"
+          },
+          "LoadBalancerBEId": {
+            "value": "[variables('sqlBEAddressPoolID')]"
           }
         }
       }
