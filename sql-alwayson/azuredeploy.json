@@ -91,7 +91,8 @@
     "SQLPrepareFunction": "PrepareSQLServer.ps1\\SQLServerPrepareDsc",
     "WitnessPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLWitness.ps1.zip')]",
     "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",    
-    "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]"
+    "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+    "sqlRoles": ["primary", "secondary"]
   },
   "resources": [
     {
@@ -290,7 +291,7 @@
             },
             "ClusterName": "Cluster01",
             "ClusterIP": "10.0.1.30",
-            "Role": "[if(equals(copyindex(),'0'),'primary','secondary')]"
+            "Role": "[variables('sqlRoles')[copyindex()]]"
           }
         },
         "protectedSettings": {

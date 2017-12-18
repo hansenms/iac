@@ -7,3 +7,4 @@ To Do List
 * Move SQL server folders to F: drive. Currently failing.
 * Create SQL cluster
 * Load Balancer
+* Use cloud witness
