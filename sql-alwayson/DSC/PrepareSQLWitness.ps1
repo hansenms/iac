@@ -10,6 +10,9 @@ configuration SQLWitnessPrepareDsc
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds,
 
+        [Parameter(Mandatory=$false)]
+        [String]$FileshareName = "SQLFILEWITNESS",
+
         [Int]$RetryCount = 20,
         [Int]$RetryIntervalSec = 30
     )
@@ -30,7 +33,7 @@ configuration SQLWitnessPrepareDsc
     }
 
     File FSWFolder {
-        DestinationPath = "F:\SQLFILEWITNESS"
+        DestinationPath = "F:\$FileshareName"
         Type            = "Directory"
         Ensure          = "Present"
         DependsOn       = "[xDisk]AddDataDisk"  
@@ -38,8 +41,8 @@ configuration SQLWitnessPrepareDsc
 
     xSmbShare FSWShare
     {
-        Name       = "SQLFILEWITNESS"
-        Path       = "F:\SQLFILEWITNESS"
+        Name       = $FileshareName
+        Path       = "F:\$FileshareName"
         FullAccess = "BUILTIN\Administrators"
         Ensure     = "Present"
         DependsOn  = "[File]FSWFolder"
