@@ -263,8 +263,6 @@ configuration SQLServerPrepareDsc
                 PsDscRunAsCredential = $DomainCreds
             }
 
-
-
             SqlAlwaysOnService EnableAlwaysOn
             {
                 Ensure               = 'Present'
@@ -293,6 +291,8 @@ configuration SQLServerPrepareDsc
                 ServerName           = $env:COMPUTERNAME
                 InstanceName         = 'MSSQLSERVER'
                 DependsOn            = "[SqlServerEndpoint]HADREndpoint","[SqlServerRole]AddDomainAdminAccountToSysAdmin"
+                AvailabilityMode     = "SynchronousCommit"
+                FailoverMode         = "Automatic" 
             }
 
         } else {
@@ -357,6 +357,8 @@ configuration SQLServerPrepareDsc
                     PrimaryReplicaInstanceName = 'MSSQLSERVER'
                     DependsOn                  = "[SqlServerEndpoint]HADREndpoint","[SqlServerRole]AddDomainAdminAccountToSysAdmin"
                     PsDscRunAsCredential = $DomainCreds
+                    AvailabilityMode     = "SynchronousCommit"
+                    FailoverMode         = "Automatic"     
                 }
         }
 
