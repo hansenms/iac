@@ -5,6 +5,10 @@
     "subnetId": {
       "type": "string"
     },
+    "clusterIpAddress": {
+      "type": "string",
+      "defaultValue": "10.0.1.30"
+    },
     "adminUsername": {
       "type": "string",
       "defaultValue": "EnterpriseAdmin"
@@ -290,7 +294,8 @@
               "password": "privateSettingsRef:adminPassword"
             },
             "ClusterName": "Cluster01",
-            "ClusterIP": "10.0.1.30",
+            "ClusterOwnerNode": "[concat(variables('SqlVmPrefix'), '0')]",
+            "ClusterIP": "[parameters('clusterIpAddress')]",
             "Role": "[variables('sqlRoles')[copyindex()]]"
           }
         },

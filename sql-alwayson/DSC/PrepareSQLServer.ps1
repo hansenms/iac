@@ -142,7 +142,7 @@ configuration SQLServerPrepareDsc
             #  see: https://github.com/PowerShell/xFailOverCluster/issues/7
             #      - Cluster is added with an IP and the xCluster module tries to access this IP. 
             #      - Cluster is not not yet responding on that addreess
-            Script InstallTFS
+            Script JoinExistingCluster
             {
                 GetScript = { 
                     return @{ 'Result' = $true }
