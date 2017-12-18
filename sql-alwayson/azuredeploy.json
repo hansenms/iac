@@ -287,7 +287,10 @@
             "adminCreds": {
               "userName": "[parameters('adminUserName')]",
               "password": "privateSettingsRef:adminPassword"
-            }
+            },
+            "ClusterName": "Cluster01",
+            "ClusterIP": "10.0.1.30",
+            "Role": "[if(equals(copyindex(),'0'),'primary','secondary')]"
           }
         },
         "protectedSettings": {
