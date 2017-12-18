@@ -260,6 +260,7 @@ configuration SQLServerPrepareDsc
                 Type             = "NodeAndFileShareMajority"
                 Resource         = $WitnessFileShareName
                 Dependson        = "[xCluster]CreateCluster"
+                PsDscRunAsCredential = $DomainCreds
             }
 
 
