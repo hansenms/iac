@@ -19,6 +19,9 @@ configuration SQLServerPrepareDsc
         [Parameter(Mandatory=$true)]
         [String]$ClusterIP,
 
+        [Parameter(Mandatory=$true)]
+        [String]$WitnessFileShareName,
+
         [Parameter(Mandatory=$false)]
         [ValidateSet('primary','secondary')]
         [String]$Role = "primary",
@@ -251,6 +254,16 @@ configuration SQLServerPrepareDsc
                 DependsOn                     = "[WindowsFeature]FCPSCMD"
             }
 
+            xClusterQuorum SetQuorumToNodeAndDiskMajority
+            {
+                IsSingleInstance = "Yes"
+                Type             = "NodeAndFileShareMajority"
+                Resource         = $WitnessFileShareName
+                Dependson        = "[xCluster]CreateCluster"
+            }
+
+
+
             SqlAlwaysOnService EnableAlwaysOn
             {
                 Ensure               = 'Present'
@@ -341,7 +354,8 @@ configuration SQLServerPrepareDsc
                     InstanceName               = 'MSSQLSERVER'
                     PrimaryReplicaServerName   = $ClusterOwnerNode
                     PrimaryReplicaInstanceName = 'MSSQLSERVER'
-                    DependsOn                  = "[SqlServerEndpoint]HADREndpoint","s[SqlServerRole]AddDomainAdminAccountToSysAdmin"
+                    DependsOn                  = "[SqlServerEndpoint]HADREndpoint","[SqlServerRole]AddDomainAdminAccountToSysAdmin"
+                    PsDscRunAsCredential = $DomainCreds
                 }
         }
 
