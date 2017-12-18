@@ -14,6 +14,9 @@ configuration SQLServerPrepareDsc
         [String]$ClusterName,
 
         [Parameter(Mandatory=$true)]
+        [String]$ClusterOwnerNode,
+
+        [Parameter(Mandatory=$true)]
         [String]$ClusterIP,
 
         [Parameter(Mandatory=$false)]
@@ -135,16 +138,28 @@ configuration SQLServerPrepareDsc
                 DependsOn        = "[WindowsFeature]FCPSCMD"
             }
 
-
-            xCluster CreateCluster
+            #We have to do this manually due to a problem with xCluster:
+            #  see: https://github.com/PowerShell/xFailOverCluster/issues/7
+            #      - Cluster is added with an IP and the xCluster module tries to access this IP. 
+            #      - Cluster is not not yet responding on that addreess
+            Script InstallTFS
             {
-                Name                          = $ClusterName
-                StaticIPAddress               = $ClusterIP
-                DomainAdministratorCredential = $DomainCreds
-                DependsOn                     = "[xWaitForCluster]WaitForCluster"
+                GetScript = { 
+                    return @{ 'Result' = $true }
+                }
+                SetScript = {
+                    $targetNodeName = $env:COMPUTERNAME
+                    Add-ClusterNode -Name $targetNodeName -Cluster $using:ClusterOwnerNode
+                }
+                TestScript = {
+                    $targetNodeName = $env:COMPUTERNAME
+                    $(Get-ClusterNode -Cluster $using:ClusterOwnerNode).Name -contains $targetNodeName
+                }
+                DependsOn = "[xWaitForCluster]WaitForCluster"
+                PsDscRunAsCredential = $DomainCreds
             }
-        }
 
+        }
 
         <#TODO: Add user for running SQL server.
         xADUser SvcUser
