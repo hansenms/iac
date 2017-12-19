@@ -345,7 +345,9 @@
       "apiVersion": "2016-03-30",
       "copy": {
         "name": "sqlconfigloop",
-        "count": 2
+        "count": 2,
+        "mode": "Serial",
+        "batchSize": 1
       },
       "location": "[resourceGroup().location]",
       "properties": {
