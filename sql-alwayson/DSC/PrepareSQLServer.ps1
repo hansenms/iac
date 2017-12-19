@@ -345,7 +345,17 @@ configuration SQLServerPrepareDsc
                   DependsOn            = "[SqlAlwaysOnService]EnableAlwaysOn"
               }
     
-               # Add the availability group replica to the availability group
+
+              SqlWaitForAG WaitForAG
+              {
+                  Name                 = 'AGDefault'
+                  RetryIntervalSec     = 20
+                  RetryCount           = 30
+                  PsDscRunAsCredential = $DomainCreds
+                  DependsOn                  = "[SqlServerEndpoint]HADREndpoint","[SqlServerRole]AddDomainAdminAccountToSysAdmin"
+              }
+      
+                # Add the availability group replica to the availability group
                 SqlAGReplica AddReplica
                 {
                     Ensure                     = 'Present'
@@ -355,10 +365,10 @@ configuration SQLServerPrepareDsc
                     InstanceName               = 'MSSQLSERVER'
                     PrimaryReplicaServerName   = $ClusterOwnerNode
                     PrimaryReplicaInstanceName = 'MSSQLSERVER'
-                    DependsOn                  = "[SqlServerEndpoint]HADREndpoint","[SqlServerRole]AddDomainAdminAccountToSysAdmin"
                     PsDscRunAsCredential = $DomainCreds
                     AvailabilityMode     = "SynchronousCommit"
-                    FailoverMode         = "Automatic"     
+                    FailoverMode         = "Automatic"
+                    DependsOn            = "[SqlWaitForAG]WaitForAG"     
                 }
         }
 
