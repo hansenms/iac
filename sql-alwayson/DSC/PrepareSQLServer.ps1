@@ -291,6 +291,7 @@ configuration SQLServerPrepareDsc
                 FailoverMode         = "Automatic" 
             }
 
+            <#
             SqlAGListener AvailabilityGroupListener
             {
                 Ensure               = 'Present'
@@ -303,6 +304,7 @@ configuration SQLServerPrepareDsc
                 PsDscRunAsCredential = $DomainCreds
                 DependsOn            = "[SqlAG]CreateAG"
             }
+            #>
 
         } else {
             xWaitForCluster WaitForCluster
