@@ -97,10 +97,6 @@
     "WitnessPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLWitness.ps1.zip')]",
     "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
-    "sqlRoles": [
-      "primary",
-      "secondary"
-    ],
     "LBName": "SQLLB",
     "LBBEName": "[concat(variables('LBName'),'BE')]",
     "LBFEName": "[concat(variables('LBName'),'FE')]",
@@ -369,8 +365,7 @@
             "ClusterName": "Cluster01",
             "ClusterOwnerNode": "[concat(variables('SqlVmPrefix'), '0')]",
             "ClusterIP": "[parameters('clusterIpAddress')]",
-            "WitnessFileShareName": "[concat('\\\\',variables('sqlwName'),'\\',variables('sqlwFileShare'))]",
-            "Role": "[variables('sqlRoles')[copyindex()]]"
+            "WitnessFileShareName": "[concat('\\\\',variables('sqlwName'),'\\',variables('sqlwFileShare'))]"
           }
         },
         "protectedSettings": {

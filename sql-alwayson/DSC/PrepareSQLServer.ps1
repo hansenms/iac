@@ -22,10 +22,6 @@ configuration SQLServerPrepareDsc
         [Parameter(Mandatory=$true)]
         [String]$WitnessFileShareName,
 
-        [Parameter(Mandatory=$false)]
-        [ValidateSet('primary','secondary')]
-        [String]$Role = "primary",
-
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30
     )
@@ -216,7 +212,7 @@ configuration SQLServerPrepareDsc
             DependsOn = "[File]BackupReadme"
         }
         #>
-        
+
         SqlServerLogin AddDomainAdminAccountToSqlServer
         {
             Name = $DomainCreds.UserName
@@ -245,7 +241,7 @@ configuration SQLServerPrepareDsc
 			DependsOn = "[SqlServerLogin]AddDomainAdminAccountToSqlServer","[SqlServerLogin]AddClusterSvcAccountToSqlServer"
         }
 
-        if ($Role -eq "primary") {
+        if ($ClusterOwnerNode -eq $env:COMPUTERNAME) { #This is the primary
             xCluster CreateCluster
             {
                 Name                          = $ClusterName
@@ -293,6 +289,19 @@ configuration SQLServerPrepareDsc
                 DependsOn            = "[SqlServerEndpoint]HADREndpoint","[SqlServerRole]AddDomainAdminAccountToSysAdmin"
                 AvailabilityMode     = "SynchronousCommit"
                 FailoverMode         = "Automatic" 
+            }
+
+            SqlAGListener AvailabilityGroupListener
+            {
+                Ensure               = 'Present'
+                ServerName           = $ClusterOwnerNode
+                InstanceName         = 'MSSQLSERVER'
+                AvailabilityGroup    = 'AGDefault'
+                Name                 = 'AGDefault'
+                IpAddress            = "$ClusterIP/255.255.255.0"
+                Port                 = 1433
+                PsDscRunAsCredential = $DomainCreds
+                DependsOn            = "[SqlAG]CreateAG"
             }
 
         } else {
