@@ -29,6 +29,11 @@ configuration SQLServerPrepareDsc
     Import-DscResource -ModuleName xComputerManagement, xNetworking, xActiveDirectory, xStorage, xFailoverCluster, SqlServer, SqlServerDsc
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
 
+    $ipcomponents = $ClusterIP.Split('.')
+    $ipcomponents[3] = [convert]::ToString(([convert]::ToInt32($ipcomponents[3])) + 1)
+    $ipdummy = $ipcomponents -join "."
+    $ClusterNameDummy = "$ClusterName-dummy"
+
     Node localhost
     {
         xWaitforDisk Disk2
@@ -244,8 +249,8 @@ configuration SQLServerPrepareDsc
         if ($ClusterOwnerNode -eq $env:COMPUTERNAME) { #This is the primary
             xCluster CreateCluster
             {
-                Name                          = $ClusterName
-                StaticIPAddress               = $ClusterIP
+                Name                          = $ClusterNameDummy
+                StaticIPAddress               = $ipdummy
                 DomainAdministratorCredential = $DomainCreds
                 DependsOn                     = "[WindowsFeature]FCPSCMD"
             }
@@ -283,7 +288,7 @@ configuration SQLServerPrepareDsc
             SqlAG CreateAG
             {
                 Ensure               = "Present"
-                Name                 = "AGDefault"
+                Name                 = $ClusterName
                 ServerName           = $env:COMPUTERNAME
                 InstanceName         = 'MSSQLSERVER'
                 DependsOn            = "[SqlServerEndpoint]HADREndpoint","[SqlServerRole]AddDomainAdminAccountToSysAdmin"
@@ -291,25 +296,22 @@ configuration SQLServerPrepareDsc
                 FailoverMode         = "Automatic" 
             }
 
-            <#
             SqlAGListener AvailabilityGroupListener
             {
                 Ensure               = 'Present'
                 ServerName           = $ClusterOwnerNode
                 InstanceName         = 'MSSQLSERVER'
-                AvailabilityGroup    = 'AGDefault'
-                Name                 = 'AGDefault'
+                AvailabilityGroup    = $ClusterName
+                Name                 = $ClusterName
                 IpAddress            = "$ClusterIP/255.255.255.0"
                 Port                 = 1433
                 PsDscRunAsCredential = $DomainCreds
                 DependsOn            = "[SqlAG]CreateAG"
             }
-            #>
-
         } else {
             xWaitForCluster WaitForCluster
             {
-                Name             = $ClusterName
+                Name             = $ClusterNameDummy
                 RetryIntervalSec = 10
                 RetryCount       = 60
                 DependsOn        = "[WindowsFeature]FCPSCMD"
@@ -359,7 +361,7 @@ configuration SQLServerPrepareDsc
 
               SqlWaitForAG WaitForAG
               {
-                  Name                 = 'AGDefault'
+                  Name                 = $ClusterName
                   RetryIntervalSec     = 20
                   RetryCount           = 30
                   PsDscRunAsCredential = $DomainCreds
@@ -371,7 +373,7 @@ configuration SQLServerPrepareDsc
                 {
                     Ensure                     = 'Present'
                     Name                       = $env:COMPUTERNAME
-                    AvailabilityGroupName      = "AGDefault"
+                    AvailabilityGroupName      = $ClusterName
                     ServerName                 = $env:COMPUTERNAME
                     InstanceName               = 'MSSQLSERVER'
                     PrimaryReplicaServerName   = $ClusterOwnerNode
