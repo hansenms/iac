@@ -340,7 +340,8 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/configuresql', copyindex())]",
       "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex())), '/extensions/joindomain')]"
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex())), '/extensions/joindomain')]",
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('sqlwName')), '/extensions/configurewitness')]"
       ],
       "apiVersion": "2016-03-30",
       "copy": {
