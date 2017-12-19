@@ -20,7 +20,10 @@ configuration SQLServerPrepareDsc
         [String]$ClusterIP,
 
         [Parameter(Mandatory=$true)]
-        [String]$WitnessFileShareName,
+        [String]$witnessStorageBlobEndpoint,
+
+        [Parameter(Mandatory=$true)]
+        [String]$witnessStorageAccountKey,
 
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30
@@ -33,6 +36,12 @@ configuration SQLServerPrepareDsc
     $ipcomponents[3] = [convert]::ToString(([convert]::ToInt32($ipcomponents[3])) + 1)
     $ipdummy = $ipcomponents -join "."
     $ClusterNameDummy = "$ClusterName-dummy"
+
+    $suri = [System.uri]$witnessStorageBlobEndpoint
+    $uricomp = $suri.Host.split('.')
+
+    $witnessStorageAccount = $uriComp[0]
+    $witnessEndpoint = $uricomp[-3] + "." + $uricomp[-2] + "." + $uricomp[-1]
 
     Node localhost
     {
@@ -255,12 +264,18 @@ configuration SQLServerPrepareDsc
                 DependsOn                     = "[WindowsFeature]FCPSCMD"
             }
 
-            xClusterQuorum SetQuorumToNodeAndDiskMajority
+            Script SetCloudWitness
             {
-                IsSingleInstance = "Yes"
-                Type             = "NodeAndFileShareMajority"
-                Resource         = $WitnessFileShareName
-                Dependson        = "[xCluster]CreateCluster"
+                GetScript = { 
+                    return @{ 'Result' = $true }
+                }
+                SetScript = {
+                    Set-ClusterQuorum -CloudWitness -AccountName $using:witnessStorageAccount -AccessKey $using:witnessStorageAccountKey -Endpoint $using:witnessEndpoint
+                }
+                TestScript = {
+                    [string]::IsNullOrEmpty($(Get-ClusterQuorum))
+                }
+                DependsOn = "[xCluster]CreateCluster"
                 PsDscRunAsCredential = $DomainCreds
             }
 
