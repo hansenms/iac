@@ -364,7 +364,7 @@
               "userName": "[parameters('adminUserName')]",
               "password": "privateSettingsRef:adminPassword"
             },
-            "ClusterName": "Cluster01",
+            "ClusterName": "SQLClusterAG",
             "ClusterOwnerNode": "[concat(variables('SqlVmPrefix'), '0')]",
             "ClusterIP": "[parameters('clusterIpAddress')]",
             "WitnessFileShareName": "[concat('\\\\',variables('sqlwName'),'\\',variables('sqlwFileShare'))]"
