@@ -182,7 +182,6 @@ configuration SQLServerPrepareDsc
             DependsOn = "[xDisk]ADDataDisk"
         }
 
-        <#
         SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
         {
 			ServerName = "$env:COMPUTERNAME"
@@ -215,7 +214,6 @@ configuration SQLServerPrepareDsc
             RestartService          = $true
             DependsOn = "[File]BackupReadme"
         }
-        #>
 
         SqlServerLogin AddDomainAdminAccountToSqlServer
         {
