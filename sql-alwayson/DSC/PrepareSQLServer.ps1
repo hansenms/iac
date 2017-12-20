@@ -273,7 +273,7 @@ configuration SQLServerPrepareDsc
                     Set-ClusterQuorum -CloudWitness -AccountName $using:witnessStorageAccount -AccessKey $using:witnessStorageAccountKey -Endpoint $using:witnessEndpoint
                 }
                 TestScript = {
-                    [string]::IsNullOrEmpty($(Get-ClusterQuorum))
+                    $(Get-ClusterQuorum).QuorumResource.ResourceType -eq "Cloud Witness"
                 }
                 DependsOn = "[xCluster]CreateCluster"
                 PsDscRunAsCredential = $DomainCreds
@@ -324,7 +324,7 @@ configuration SQLServerPrepareDsc
                 DependsOn            = "[SqlAG]CreateAG"
             }
 
-            Scrip SetProbePort
+            Script SetProbePort
             {
 
                 GetScript = { 
@@ -335,7 +335,7 @@ configuration SQLServerPrepareDsc
                     $ipResource = Get-ClusterResource $ipResourceName
                     $clusterResource = Get-ClusterResource -Name $using:ClusterName 
 
-                    Set-ClusterParameter -InputObject $resource -Name ProbePort -Value 59999
+                    Set-ClusterParameter -InputObject $ipResource -Name ProbePort -Value 59999
 
                     Stop-ClusterResource $ipResource
                     Stop-ClusterResource $clusterResource
@@ -347,7 +347,9 @@ configuration SQLServerPrepareDsc
                 TestScript = {
                     $ipResourceName = $using:ClusterName + "_" + $using:ClusterIP
                     $resource = Get-ClusterResource $ipResourceName
-                    $(Get-ClusterParameter -InputObject $resource -Name ProbePort).Value -ne 59999
+                    $probePort = $(Get-ClusterParameter -InputObject $resource -Name ProbePort).Value
+                    Write-Verbose "ProbePort = $probePort"
+                    ($(Get-ClusterParameter -InputObject $resource -Name ProbePort).Value -eq 59999)
                 }
                 DependsOn = "[SqlAGListener]AvailabilityGroupListener"
                 PsDscRunAsCredential = $DomainCreds
