@@ -154,7 +154,7 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "static",
+              "privateIPAllocationMethod": "Static",
               "subnet": {
                 "id": "[parameters('subnetId')]"
               },

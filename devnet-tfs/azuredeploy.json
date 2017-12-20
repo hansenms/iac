@@ -154,7 +154,7 @@
     "coreVnetName": "corevnet",
     "corevnetDevOpsSubnetName": "Subnet-2",
     "vnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
-    "devopsdubnetid": "[concat(variables('vnetid'), '/subnets/', variables('corevnetDevOpsSubnetName'))]",
+    "devopsdubnetid": "[concat(variables('vnetid'), '/subnets/', variables('corevnetDevOpsSubnetName'))]"
   },
   "resources": [
     {

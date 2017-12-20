@@ -10,10 +10,10 @@ This template illustrates how to create a private DevOps network with TFS server
 This deployment is actually a nested compbination of deployment of a virtual network with two domain controllers and a JumpBox. You can deploy that without the TFS installation using [this template](https://github.com/hansenms/iac/tree/master/core-network). You can then deploy the TFS resources (e.g. in a different resource group) using [this template](https://github.com/hansenms/iac/tree/master/tfs). 
 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fhansenms%2Fiac%2Fmaster%2Fdevnet-tfs%2Fazuredeploy.json" target="_blank">
+<a href="https://transmogrify.azurewebsites.net/devnet-tfs/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-<a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fhansenms%2Fiac%2Fmaster%2Fdevnet-tfs%2Fazuredeploy.json" target="_blank">
+<a href="https://transmogrify.azurewebsites.net/devnet-tfs/azuredeploy.json?environment=gov" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
 </a>

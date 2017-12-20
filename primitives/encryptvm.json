@@ -1,0 +1,115 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual machine"
+      }
+    },
+    "aadClientID": {
+      "type": "string",
+      "metadata": {
+        "description": "Client ID of AAD app which has permissions to KeyVault"
+      }
+    },
+    "aadClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client Secret of AAD app which has permissions to KeyVault"
+      }
+    },
+    "keyVaultResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Keyvault"
+      }
+    },
+    "keyEncryptionKeyURL": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
+      }
+    },
+    "volumeType": {
+      "type": "string",
+      "defaultValue": "All",
+      "metadata": {
+        "description": "Type of the volume OS or Data to perform encryption operation"
+      }
+    },
+    "sequenceVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+      }
+    }
+  },
+  "variables": {
+    "extensionName": "AzureDiskEncryption",
+    "extensionVersion": "1.1",
+    "encryptionOperation": "EnableEncryption",
+    "keyEncryptionAlgorithm": "RSA-OAEP"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', variables('extensionName'))]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "AzureDiskEncryption",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[parameters('sequenceVersion')]",
+        "settings": {
+          "AADClientID": "[parameters('aadClientID')]",
+          "KeyVaultURL": "[reference(parameters('keyVaultResourceId'), '2016-10-01').vaultUri]",
+          "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+          "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
+          "VolumeType": "[parameters('volumeType')]",
+          "EncryptionOperation": "[variables('encryptionOperation')]"
+        },
+        "protectedSettings": {
+          "AADClientSecret": "[parameters('aadClientSecret')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+          "storageProfile": {
+              "osDisk": {
+                  "encryptionSettings": {
+                      "diskEncryptionKey": {
+                          "sourceVault": {
+                              "id": "[parameters('keyVaultResourceID')]"
+                          },
+                          "secretUrl": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))).instanceView.statuses[0].message]"
+                      },
+                      "keyEncryptionKey": {
+                          "sourceVault": {
+                              "id": "[parameters('keyVaultResourceID')]"
+                          },
+                          "keyUrl": "[parameters('keyEncryptionKeyURL')]"
+                      }
+                  }
+              }
+          }
+      }
+    }
+  ],
+  "outputs": {
+    "BitLockerKey": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))).instanceView.statuses[0].message]"
+    }
+  }
+}
