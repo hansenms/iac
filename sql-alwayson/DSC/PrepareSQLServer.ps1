@@ -35,7 +35,7 @@ configuration SQLServerPrepareDsc
     $ipcomponents = $ClusterIP.Split('.')
     $ipcomponents[3] = [convert]::ToString(([convert]::ToInt32($ipcomponents[3])) + 1)
     $ipdummy = $ipcomponents -join "."
-    $ClusterNameDummy = "$ClusterName-dummy"
+    $ClusterNameDummy = "c" + $ClusterName
 
     $suri = [System.uri]$witnessStorageBlobEndpoint
     $uricomp = $suri.Host.split('.')
@@ -323,6 +323,36 @@ configuration SQLServerPrepareDsc
                 PsDscRunAsCredential = $DomainCreds
                 DependsOn            = "[SqlAG]CreateAG"
             }
+
+            Scrip SetProbePort
+            {
+
+                GetScript = { 
+                    return @{ 'Result' = $true }
+                }
+                SetScript = {
+                    $ipResourceName = $using:ClusterName + "_" + $using:ClusterIP
+                    $ipResource = Get-ClusterResource $ipResourceName
+                    $clusterResource = Get-ClusterResource -Name $using:ClusterName 
+
+                    Set-ClusterParameter -InputObject $resource -Name ProbePort -Value 59999
+
+                    Stop-ClusterResource $ipResource
+                    Stop-ClusterResource $clusterResource
+
+                    Start-ClusterResource $clusterResource #This should be enough
+                    Start-ClusterResource $ipResource #To be on the safe side
+
+                }
+                TestScript = {
+                    $ipResourceName = $using:ClusterName + "_" + $using:ClusterIP
+                    $resource = Get-ClusterResource $ipResourceName
+                    $(Get-ClusterParameter -InputObject $resource -Name ProbePort).Value -ne 59999
+                }
+                DependsOn = "[SqlAGListener]AvailabilityGroupListener"
+                PsDscRunAsCredential = $DomainCreds
+            }
+
         } else {
             xWaitForCluster WaitForCluster
             {
