@@ -63,14 +63,10 @@
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'sqlvmdiag')]",
     "cloudWitnessStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'sqlw')]",
     "HASetName": "SqlHASet",
-    "sqlwName": "SqlWitness",
-    "sqlwFileShare": "SQLFILEWITNESS",
     "SqlVmPrefix": "SQL",
     "baseUri": "https://raw.githubusercontent.com/hansenms/iac/core-primitives/sql-alwayson/azuredeploy.json",
     "SQLPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLServer.ps1.zip')]",
     "SQLPrepareFunction": "PrepareSQLServer.ps1\\SQLServerPrepareDsc",
-    "WitnessPrepareModuleURL": "[uri(variables('baseUri'), 'DSC/PrepareSQLWitness.ps1.zip')]",
-    "WitnessPrepareFunction": "PrepareSQLWitness.ps1\\SQLWitnessPrepareDsc",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
     "LBName": "SQLLB",
     "LBBEName": "[concat(variables('LBName'),'BE')]",
@@ -233,10 +229,64 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/joindomain')]",
+      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/SqlIaasExtension')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', concat('SqlVmDeploy', copyindex()))]"
+      ],
+      "copy": {
+        "name": "sqliaasextensionsloop",
+        "count": 2
+      },
+      "properties": {
+        "type": "SqlIaaSAgent",
+        "publisher": "Microsoft.SqlServer.Management",
+        "typeHandlerVersion": "1.2",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "AutoTelemetrySettings": {
+            "Region": "[resourceGroup().location]"
+          },
+          "AutoPatchingSettings": {
+            "PatchCategory": "WindowsMandatoryUpdates",
+            "Enable": true,
+            "DayOfWeek": "Sunday",
+            "MaintenanceWindowStartingHour": "2",
+            "MaintenanceWindowDuration": "60"
+          },
+          "KeyVaultCredentialSettings": {
+            "Enable": false,
+            "CredentialName": ""
+          },
+          "ServerConfigurationsManagementSettings": {
+            "SQLConnectivityUpdateSettings": {
+              "ConnectivityType": "Private",
+              "Port": "1433"
+            },
+            "SQLWorkloadTypeUpdateSettings": {
+              "SQLWorkloadType": "GENERAL"
+            },
+            "SQLStorageUpdateSettings": {
+              "DiskCount": "1",
+              "NumberOfColumns": "1",
+              "StartingDeviceID": "2",
+              "DiskConfigurationType": "NEW"
+            },
+            "AdditionalFeaturesServerConfigurations": {
+              "IsRServicesEnabled": "false"
+            }
+          }
+        },
+        "protectedSettings": {}
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('SqlVmPrefix'), copyindex(), '/joindomain')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('SqlVmPrefix'), copyindex())), '/extensions/SqlIaasExtension')]"
       ],
       "copy": {
         "name": "sqlvmjoinloop",

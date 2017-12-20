@@ -45,19 +45,6 @@ configuration SQLServerPrepareDsc
 
     Node localhost
     {
-        xWaitforDisk Disk2
-        {
-                DiskId = 2
-                RetryIntervalSec =$RetryIntervalSec
-                RetryCount = $RetryCount
-        }
-
-        xDisk ADDataDisk
-        {
-            DiskId = 2
-            DriveLetter = "F"
-            DependsOn = "[xWaitForDisk]Disk2"
-        }
         
 		xFirewall DatabaseEngineFirewallRule
         {
@@ -131,99 +118,10 @@ configuration SQLServerPrepareDsc
             Ensure = "Present"
         }
 
-
-
-
         <#TODO: Add user for running SQL server.
         xADUser SvcUser
         {
 
-        }
-        #>
-
-        File DataFolder
-        {
-            DestinationPath = "F:\Data"
-            Type = "Directory"
-            Ensure = "Present"
-            DependsOn = "[xDisk]ADDataDisk"
-        }
-
-        File DataReadme
-        {
-            DestinationPath = "F:\Data\README.txt"
-            Contents = "This folder is for SQL Databases"
-            Type = "File"
-            Ensure = "Present"
-            DependsOn = "[File]DataFolder"
-        }
-
-        File LogFolder
-        {
-            DestinationPath = "F:\Log"
-            Type = "Directory"
-            Ensure = "Present"
-            DependsOn = "[xDisk]ADDataDisk"
-        }
-
-        File LogReadme
-        {
-            DestinationPath = "F:\Log\README.txt"
-            Contents = "This folder is for SQL logs"
-            Type = "File"
-            Ensure = "Present"
-            DependsOn = "[File]LogFolder"
-        }
-
-        File BackupReadme
-        {
-            DestinationPath = "F:\Backup\README.txt"
-            Contents = "This folder is for SQL backups"
-            Type = "File"
-            Ensure = "Present"
-            DependsOn = "[File]BackupFolder"
-        }
-
-        File BackupFolder
-        {
-            DestinationPath = "F:\Backup"
-            Type = "Directory"
-            Ensure = "Present"
-            DependsOn = "[xDisk]ADDataDisk"
-        }
-
-        <#
-        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Data
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ProcessOnlyOnActiveNode = $true
-            Type                    = 'Data'
-            Path                    = 'F:\Data'
-            RestartService          = $true
-            DependsOn = "[File]DataReadme"
-        }
-
-        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Log
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ProcessOnlyOnActiveNode = $true
-            Type                    = 'Log'
-            Path                    = 'F:\Log'
-            RestartService          = $true
-            DependsOn = "[File]LogReadme"
-        }
-
-        SqlDatabaseDefaultLocation Set_SqlDatabaseDefaultDirectory_Backup
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ProcessOnlyOnActiveNode = $true
-            Type                    = 'Backup'
-            Path                    = 'F:\Backup'
-            RestartService          = $true
-            DependsOn = "[File]BackupReadme"
         }
         #>
 
