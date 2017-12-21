@@ -21,7 +21,7 @@ configuration TFSInstallDsc
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     
-    Import-DscResource -ModuleName  xStorage, 'PSDesiredStateConfiguration'
+    Import-DscResource -ModuleName  xStorage, xPendingReboot, 'PSDesiredStateConfiguration'
 
     <#
         Download links for TFS:
@@ -109,8 +109,17 @@ configuration TFSInstallDsc
             }
             DependsOn = "[Script]DownloadTFS"
         }
-
-        
+ 
+ 
+        xPendingReboot PostInstallReboot {
+            Name = "Check for a pending reboot before changing anything"
+            DependsOn = "[Script]InstallTFS"
+        }
+ 
+        LocalConfigurationManager{
+            RebootNodeIfNeeded = $True
+        }
+                
         Script ConfigureTFS
         {
             GetScript = {
@@ -130,7 +139,7 @@ configuration TFSInstallDsc
             TestScript = {
                 $false
             }
-            DependsOn = "[Script]InstallTFS"
+            DependsOn = "[xPendingReboot]PostInstallReboot"
             PsDscRunAsCredential = $DomainCreds
         }
     }
