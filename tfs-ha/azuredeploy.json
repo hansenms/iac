@@ -1,14 +1,171 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0",
+    "contentVersion": "1.0.0.0",
     "parameters": {
-        
+        "subnetId": {
+            "type": "string"
+        },
+        "adminPassword": {
+          "type": "securestring"
+        },
+        "adminUsername": {
+          "type": "string",
+          "defaultValue": "EnterpriseAdmin"
+        },
+        "sqlServerName": {
+            "type": "string",
+            "defaultValue": "SQLClusterAG"
+        },
+        "domainName": {
+          "type": "string",
+          "defaultValue": "devnet.contoso.us"
+        },
+        "encryptionConfiguration": {
+            "type": "object",
+            "defaultValue": {}
+        },        
+        "vmSize": {
+          "type": "string",
+          "allowedValues": [
+            "Standard_D1_v2",
+            "Standard_D2_v2",
+            "Standard_D3_v2",
+            "Standard_D4_v2",
+            "Standard_D5_v2",
+            "Standard_D11_v2",
+            "Standard_D12_v2",
+            "Standard_D13_v2",
+            "Standard_D14_v2",
+            "Standard_D15_v2",
+            "Standard_DS1_v2",
+            "Standard_DS2_v2",
+            "Standard_DS3_v2",
+            "Standard_DS4_v2",
+            "Standard_DS5_v2",
+            "Standard_DS11_v2",
+            "Standard_DS12_v2",
+            "Standard_DS13_v2",
+            "Standard_DS14_v2",
+            "Standard_DS15_v2"
+          ],
+          "defaultValue": "Standard_DS2_v2"
+        },
+        "imageSku": {
+            "type": "string",
+            "defaultValue": "2016-Datacenter"
+        },
+        "tfsVmInstanceCount": {
+            "type": "int",
+            "defaultValue": 2
+        }
     },
     "variables": {
-        
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",        
+        "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsvmdiag')]",
+        "HASetName": "TFSHASet",
+        "tfsVMPrefix": "TFS"        
     },
     "resources": [
-        
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('diagStorageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+              "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },      
+        {
+          "name": "[variables('HASetName')]",
+          "type": "Microsoft.Compute/availabilitySets",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2017-03-30",
+          "dependsOn": [],
+          "properties": {
+            "platformUpdateDomainCount": 2,
+            "platformFaultDomainCount": 2
+          },
+          "sku": {
+            "name": "Aligned"
+          }
+        },
+        {
+          "name": "[concat('TFSVmDeploy', copyindex())]",
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2017-05-10",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+          ],
+          "copy": {
+            "name": "tfsvmloop",
+            "count": "[parameters('tfsVmInstanceCount')]"
+          },
+          "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+              "uri": "[variables('windowsVmTemplateURL')]",
+              "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+              "vmName": {
+                "value": "[concat(variables('tfsVMPrefix'), copyindex())]"
+              },
+              "vmSize": {
+                "value": "[parameters('vmSize')]"
+              },
+              "subnetId": {
+                "value": "[parameters('subnetId')]"
+              },
+              "adminUsername": {
+                "value": "[parameters('adminUsername')]"
+              },
+              "adminPassword": {
+                "value": "[parameters('adminPassword')]"
+              },
+              "diagStorageAccountId": {
+                "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+              },
+              "availabilitySetId": {
+                "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
+              },
+              "imageSku": {
+                "value": "[parameters('imageSku')]"
+              }
+            }
+          }
+        },
+        {
+          "apiVersion": "2015-06-15",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('tfsVmPrefix'), copyindex(), '/joindomain')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Resources/deployments', concat('TFSVmDeploy', copyindex()))]"
+          ],
+          "copy": {
+            "name": "tfsvmjoinloop",
+            "count": "[parameters('tfsVmInstanceCount')]"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.3",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "Name": "[parameters('domainName')]",
+              "OUPath": "",
+              "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
+              "Restart": "true",
+              "Options": "3"
+            },
+            "protectedSettings": {
+              "Password": "[parameters('adminPassword')]"
+            }
+          }
+        }
     ],
     "outputs": {
         
