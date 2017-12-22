@@ -161,7 +161,7 @@ configuration TFSInstallDsc
 
                 $cmd = ""
                 if ($using:isPrimaryInstance) {                
-                    $cmd = "& '$using:TfsConfigExe' unattend /configure /continue /type:NewServerAdvanced  /inputs:WebSiteVDirName=';'PublicUrl=$publicUrl';'SqlInstance=$using:SqlServerInstance;'SiteBindings='$siteBindings'"
+                    $cmd = "& '$using:TfsConfigExe' unattend /configure /continue /type:NewServerAdvanced  /inputs:WebSiteVDirName=';'PublicUrl=$publicUrl';'SqlInstance=$using:SqlServerInstance';'SiteBindings='$siteBindings'"
                 } else {
                     $cmd = "& '$using:TfsConfigExe' unattend /configure /continue /type:ApplicationTierOnlyAdvanced  /inputs:WebSiteVDirName=';'PublicUrl=$publicUrl';'SqlInstance=$using:SqlServerInstance';'SiteBindings='$siteBindings'"
                 }
