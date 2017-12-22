@@ -14,6 +14,15 @@ configuration TFSInstallDsc
         [Parameter(Mandatory)]
         [String]$primaryInstance,
 
+        [Parameter(Mandatory=$true)]
+        [String]$GlobalSiteIP,
+
+        [Parameter(Mandatory=$false)]
+        [String]$GlobalSiteName = "TFS",
+
+        [Parameter(Mandatory=$false)]
+        [String]$DnsServer = "DC1",
+
         [Parameter(Mandatory=$false)]
         [ValidateSet("TFS2018", "TFS2017Update3","TFS2017Update2")]
         [String]$TFSVersion = "TFS2018"
@@ -21,7 +30,7 @@ configuration TFSInstallDsc
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     
-    Import-DscResource -ModuleName  xStorage, xPendingReboot, 'PSDesiredStateConfiguration'
+    Import-DscResource -ModuleName  xStorage, xPendingReboot, xDnsServer, 'PSDesiredStateConfiguration'
 
     <#
         Download links for TFS:
@@ -40,6 +49,7 @@ configuration TFSInstallDsc
     $currentDownloadLink = $TFSDownloadLinks[$TFSVersion]
     $installerDownload = $env:TEMP + "\tfs_installer.exe"
     $isTFS2017 = $false
+    $hostName = $env:COMPUTERNAME
 
     $isPrimaryInstance = $primaryInstance -eq $env:COMPUTERNAME
 
@@ -56,11 +66,26 @@ configuration TFSInstallDsc
     Node localhost
     {   
 		
+        WindowsFeature ADPS
+        {
+            Name = "RSAT-AD-PowerShell"
+            Ensure = "Present"
+        }
+
+
+        WindowsFeature DNSServer
+        {
+            Name = "RSAT-DNS-Server"
+            Ensure = "Present"
+            DependsOn = "[WindowsFeature]ADPS"
+        }
+        
 		xWaitforDisk Disk2
         {
                 DiskId = 2
                 RetryIntervalSec =$RetryIntervalSec
                 RetryCount = $RetryCount
+                DependsOn = "[WindowsFeature]DNSServer"
         }
 
         xDisk ADDataDisk
@@ -126,20 +151,45 @@ configuration TFSInstallDsc
                 return @{ 'Result' = $true }                
             }
             SetScript = {
+                $siteBindings = "https:*:443:" + $using:hostName + "." + $using:DomainName + ":My:generate"
+                $siteBindings += ",https:*:443:" + $using:hostName + ":My:generate" 
+                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + "." + $using:DomainName + ":My:generate"
+                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + ":My:generate" 
+                $siteBindings += ",http:*:80:"
+
+                $publicUrl = "https://$using:hostName"
+
                 $cmd = ""
                 if ($using:isPrimaryInstance) {                
-                    $cmd = "& '$using:TfsConfigExe' unattend /configure /continue /type:NewServerAdvanced  /inputs:SqlInstance=" + $using:SqlServerInstance
+                    $cmd = "& '$using:TfsConfigExe' unattend /configure /continue /type:NewServerAdvanced  /inputs:WebSiteVDirName=';'PublicUrl=$publicUrl';'SqlInstance=$using:SqlServerInstance;'SiteBindings='$siteBindings'"
                 } else {
-                    $cmd = "& '$using:TfsConfigExe' unattend /configure /continue /type:ApplicationTierOnlyAdvanced  /inputs:SqlInstance=" + $using:SqlServerInstance
+                    $cmd = "& '$using:TfsConfigExe' unattend /configure /continue /type:ApplicationTierOnlyAdvanced  /inputs:WebSiteVDirName=';'PublicUrl=$publicUrl';'SqlInstance=$using:SqlServerInstance';'SiteBindings='$siteBindings'"
                 }
 
                 Write-Verbose "$cmd"
                 Invoke-Expression $cmd | Write-Verbose
+
+                $publicUrl = "https://$using:GlobalSiteName"
+                $cmd = "& '$using:TfsConfigExe' settings /publicUrl:$publicUrl"
+                Write-Verbose "$cmd"
+                Invoke-Expression $cmd | Write-Verbose
+
             }
             TestScript = {
                 $false
             }
             DependsOn = "[xPendingReboot]PostInstallReboot"
+            PsDscRunAsCredential = $DomainCreds
+        }
+
+        xDnsRecord GlobalDNS
+        {
+            Name = $GlobalSiteName
+            Target = $GlobalSiteIP
+            Type = "ARecord"
+            Zone = $DomainName
+            DependsOn = "[Script]ConfigureTFS"
+            DnsServer = $DnsServer
             PsDscRunAsCredential = $DomainCreds
         }
     }
