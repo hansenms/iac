@@ -57,14 +57,27 @@
         "tfsVmInstanceCount": {
             "type": "int",
             "defaultValue": 2
+        },
+        "LBIpAddress": {
+            "type": "string",
+            "defaultValue": "10.0.1.40"
         }
     },
     "variables": {
         "baseUri": "[deployment().properties.templateLink.uri]",
+        "TFSInstallModuleURL": "[uri(variables('baseUri'), 'DSC/InstallTFS.ps1.zip')]",
+        "TFSInstallFunction": "InstallTFS.ps1\\TFSInstallDsc",
         "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",        
         "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsvmdiag')]",
         "HASetName": "TFSHASet",
-        "tfsVMPrefix": "TFS"        
+        "tfsVMPrefix": "TFS",
+        "LBName": "SQLLB",
+        "LBBEName": "[concat(variables('LBName'),'BE')]",
+        "LBFEName": "[concat(variables('LBName'),'FE')]",
+        "LBProbeName": "[concat(variables('LBName'),'Probe')]",
+        "LBBEAddressPoolID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/backendAddressPools/',variables('LBBEName'))]",
+        "LBFEConfigID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/frontendIPConfigurations/',variables('LBFEName'))]",
+        "LBProbeID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/probes/',variables('LBProbeName'))]"            
     },
     "resources": [
         {
@@ -90,6 +103,84 @@
           },
           "sku": {
             "name": "Aligned"
+          }
+        },
+        {
+          "name": "[variables('LBName')]",
+          "type": "Microsoft.Network/loadBalancers",
+          "apiVersion": "2017-10-01",
+          "location": "[resourceGroup().location]",
+          "properties": {
+            "frontendIPConfigurations": [
+              {
+                "name": "[variables('LBFEName')]",
+                "properties": {
+                  "privateIPAddress": "[parameters('LBIpAddress')]",
+                  "privateIPAllocationMethod": "Static",
+                  "subnet": {
+                    "id": "[parameters('subnetId')]"
+                  }
+                }
+              }
+            ],
+            "backendAddressPools": [
+              {
+                "name": "[variables('LBBEName')]"
+              }
+            ],
+            "loadBalancingRules": [
+              {
+                "name": "LBRule1",
+                "properties": {
+                  "frontendIPConfiguration": {
+                    "id": "[variables('LBFEConfigID')]"
+                  },
+                  "backendAddressPool": {
+                    "id": "[variables('LBBEAddressPoolID')]"
+                  },
+                  "probe": {
+                    "id": "[variables('LBProbeID')]"
+                  },
+                  "frontendPort": 80,
+                  "backendPort": 80,
+                  "enableFloatingIP": true,
+                  "idleTimeoutInMinutes": 4,
+                  "protocol": "Tcp",
+                  "loadDistribution": "Default"
+                }
+              },
+              {
+                "name": "LBRule2",
+                "properties": {
+                  "frontendIPConfiguration": {
+                    "id": "[variables('LBFEConfigID')]"
+                  },
+                  "backendAddressPool": {
+                    "id": "[variables('LBBEAddressPoolID')]"
+                  },
+                  "probe": {
+                    "id": "[variables('LBProbeID')]"
+                  },
+                  "frontendPort": 443,
+                  "backendPort": 443,
+                  "enableFloatingIP": true,
+                  "idleTimeoutInMinutes": 4,
+                  "protocol": "Tcp",
+                  "loadDistribution": "Default"
+                }
+              }
+            ],
+            "probes": [
+              {
+                "name": "[variables('LBProbeName')]",
+                "properties": {  
+                  "protocol": "Http",
+                  "port": 80,
+                  "intervalInSeconds": 5,
+                  "numberOfProbes": 2
+                }
+              }
+            ]
           }
         },
         {
@@ -133,6 +224,9 @@
               },
               "imageSku": {
                 "value": "[parameters('imageSku')]"
+              },
+              "LoadBalancerBEId": {
+                "value": "[variables('LBBEAddressPoolID')]"
               }
             }
           }
@@ -165,7 +259,50 @@
               "Password": "[parameters('adminPassword')]"
             }
           }
-        }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('tfsVmPrefix'), copyindex(), '/configuretfs', copyindex())]",
+            "dependsOn": [
+              "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('tfsVmPrefix'), copyindex())), '/extensions/joindomain')]"
+            ],
+            "apiVersion": "2016-03-30",
+            "copy": {
+              "name": "tfsconfigloop",
+              "count": 2,
+              "mode": "Serial",
+              "batchSize": 1
+            },
+            "location": "[resourceGroup().location]",
+            "properties": {
+              "publisher": "Microsoft.Powershell",
+              "type": "DSC",
+              "typeHandlerVersion": "2.21",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "modulesURL": "[variables('TFSInstallModuleURL')]",
+                "configurationFunction": "[variables('TFSInstallFunction')]",
+                "properties": {
+                  "domainName": "[parameters('domainName')]",
+                  "adminCreds": {
+                    "userName": "[parameters('adminUserName')]",
+                    "password": "privateSettingsRef:adminPassword"
+                  },
+                  "SqlServerInstance": "SQLClusterAG",
+                  "primaryInstance": "[concat(variables('TfsVmPrefix'), '0')]",
+                  "GlobalSiteIP": "[parameters('LBIpAddress')]",
+                  "GlobalSiteName": "TFS",
+                  "DnsServer": "DC1",
+                  "TFSVersion": "TFS2018"
+                }
+              },
+              "protectedSettings": {
+                "items": {
+                  "adminPassword": "[parameters('adminPassword')]"
+                }
+              }
+            }
+          }
     ],
     "outputs": {
         
