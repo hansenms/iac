@@ -143,7 +143,6 @@
                   },
                   "frontendPort": 80,
                   "backendPort": 80,
-                  "enableFloatingIP": true,
                   "idleTimeoutInMinutes": 4,
                   "protocol": "Tcp",
                   "loadDistribution": "Default"
@@ -163,7 +162,6 @@
                   },
                   "frontendPort": 443,
                   "backendPort": 443,
-                  "enableFloatingIP": true,
                   "idleTimeoutInMinutes": 4,
                   "protocol": "Tcp",
                   "loadDistribution": "Default"

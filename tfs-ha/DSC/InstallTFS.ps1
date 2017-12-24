@@ -24,13 +24,16 @@ configuration TFSInstallDsc
         [String]$DnsServer = "DC1",
 
         [Parameter(Mandatory=$false)]
+        [String]$ProbePort = '59999',
+
+        [Parameter(Mandatory=$false)]
         [ValidateSet("TFS2018", "TFS2017Update3","TFS2017Update2")]
         [String]$TFSVersion = "TFS2018"
     )
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     
-    Import-DscResource -ModuleName  xStorage, xPendingReboot, xDnsServer, 'PSDesiredStateConfiguration'
+    Import-DscResource -ModuleName  xStorage, xPendingReboot, xDnsServer, xWebAdministration, xNetworking, 'PSDesiredStateConfiguration'
 
     <#
         Download links for TFS:
@@ -191,6 +194,34 @@ configuration TFSInstallDsc
             DependsOn = "[Script]ConfigureTFS"
             DnsServer = $DnsServer
             PsDscRunAsCredential = $DomainCreds
+        }
+
+        xWebsite ProbeWebSite 
+        {
+            Ensure          = 'Present'
+            Name            = 'Probe Web Site'
+            State           = 'Started'
+            PhysicalPath    = 'C:\inetpub\wwwroot'
+            BindingInfo     = MSFT_xWebBindingInformation
+            {
+                Protocol              = 'http'
+                Port                  = $ProbePort
+                IPAddress             = '*'
+            }
+            DependsOn       = '[xDnsRecord]GlobalDNS'
+        }
+
+        xFirewall DatabaseEngineFirewallRule
+        {
+            Direction = "Inbound"
+            Name = "IIS Probe"
+            DisplayName = "IIS Probe"
+            Group = "TFS"
+            Enabled = "True"
+            Protocol = "TCP"
+            LocalPort = $ProbePort
+            Ensure = "Present"
+            DependsOn       = '[xWebsite]ProbeWebSite'             
         }
     }
 }
