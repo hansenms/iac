@@ -145,7 +145,7 @@
                   "backendPort": 80,
                   "idleTimeoutInMinutes": 4,
                   "protocol": "Tcp",
-                  "loadDistribution": "Default"
+                  "loadDistribution": "SourceIP"
                 }
               },
               {
@@ -164,7 +164,7 @@
                   "backendPort": 443,
                   "idleTimeoutInMinutes": 4,
                   "protocol": "Tcp",
-                  "loadDistribution": "Default"
+                  "loadDistribution": "SourceIP"
                 }
               }
             ],
