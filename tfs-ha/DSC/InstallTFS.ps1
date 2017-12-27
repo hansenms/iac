@@ -26,6 +26,9 @@ configuration TFSInstallDsc
         [Parameter(Mandatory=$false)]
         [String]$ProbePort = '59999',
 
+        [Parameters(Mandatory=$false)]
+        [String]$SslThumbprint = "generate",
+
         [Parameter(Mandatory=$false)]
         [ValidateSet("TFS2018", "TFS2017Update3","TFS2017Update2")]
         [String]$TFSVersion = "TFS2018"
@@ -154,10 +157,10 @@ configuration TFSInstallDsc
                 return @{ 'Result' = $true }                
             }
             SetScript = {
-                $siteBindings = "https:*:443:" + $using:hostName + "." + $using:DomainName + ":My:generate"
-                $siteBindings += ",https:*:443:" + $using:hostName + ":My:generate" 
-                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + "." + $using:DomainName + ":My:generate"
-                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + ":My:generate" 
+                $siteBindings = "https:*:443:" + $using:hostName + "." + $using:DomainName + ":My:" + $using:SslThumbprint
+                $siteBindings += ",https:*:443:" + $using:hostName + ":My:" + $using:SslThumbprint 
+                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + "." + $using:DomainName + ":My:" + $using:SslThumbprint
+                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + ":My:" + $using:SslThumbprint 
                 $siteBindings += ",http:*:80:"
 
                 $publicUrl = "https://$using:hostName"

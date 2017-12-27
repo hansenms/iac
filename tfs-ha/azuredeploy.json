@@ -16,6 +16,10 @@
             "type": "string",
             "defaultValue": "SQLClusterAG"
         },
+        "sqlServerPrimaryServer": {
+          "type": "string",
+          "defaultValue": "SQL0"
+        },
         "domainName": {
           "type": "string",
           "defaultValue": "devnet.contoso.us"
@@ -61,6 +65,14 @@
         "LBIpAddress": {
             "type": "string",
             "defaultValue": "10.0.1.40"
+        },
+        "secrets": {
+          "type": "array",
+          "defaultValue": []
+        },
+        "sslThumbprint": {
+          "type": "string",
+          "defaultValue": "generate"
         }
     },
     "variables": {
@@ -227,6 +239,9 @@
               },
               "LoadBalancerBEId": {
                 "value": "[variables('LBBEAddressPoolID')]"
+              },
+              "secrets": {
+                "value": "[parameters('secrets')]"
               }
             }
           }
@@ -288,12 +303,13 @@
                     "userName": "[parameters('adminUserName')]",
                     "password": "privateSettingsRef:adminPassword"
                   },
-                  "SqlServerInstance": "SQLClusterAG",
+                  "SqlServerInstance": "[parameters('sqlServerName')]",
                   "primaryInstance": "[concat(variables('TfsVmPrefix'), '0')]",
                   "GlobalSiteIP": "[parameters('LBIpAddress')]",
                   "GlobalSiteName": "TFS",
                   "DnsServer": "DC1",
-                  "TFSVersion": "TFS2018"
+                  "TFSVersion": "TFS2018",
+                  "SslThumbprint": "[parameters('sslThumbprint')]"
                 }
               },
               "protectedSettings": {
