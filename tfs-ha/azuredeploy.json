@@ -173,7 +173,7 @@
                 "name": "[variables('LBProbeName')]",
                 "properties": {  
                   "protocol": "Http",
-                  "port": 80,
+                  "port": 59999,
                   "intervalInSeconds": 5,
                   "numberOfProbes": 2,
                   "requestPath": "/"

@@ -64,6 +64,10 @@
         "LoadBalancerBEId": {
             "type": "string",
             "defaultValue": ""
+        },
+        "secrets": {
+            "type": "array",
+            "defaultValue": []
         }
     },
     "variables": {
@@ -209,7 +213,8 @@
                 "osProfile": {
                     "computerName": "[parameters('vmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "secrets": "[parameters('secrets')]"
                 },
                 "storageProfile": {
                     "imageReference": {
