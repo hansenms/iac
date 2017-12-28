@@ -43,6 +43,9 @@ configuration SQLServerPrepareDsc
     $witnessStorageAccount = $uriComp[0]
     $witnessEndpoint = $uricomp[-3] + "." + $uricomp[-2] + "." + $uricomp[-1]
 
+    $computerName = $env:COMPUTERNAME
+    $domainUserName = $DomainCreds.UserName.ToString()
+
     Node localhost
     {
         
@@ -153,13 +156,64 @@ configuration SQLServerPrepareDsc
 			DependsOn = "[SqlServerLogin]AddDomainAdminAccountToSqlServer","[SqlServerLogin]AddClusterSvcAccountToSqlServer"
         }
 
+        #TODO: We should create a dedicated user for this.
+        SqlServiceAccount SetServiceAcccount_User
+        {
+			ServerName = "$env:COMPUTERNAME"
+			InstanceName = "MSSQLSERVER"
+            ServiceType    = 'DatabaseEngine'
+            ServiceAccount = $DomainCreds
+            RestartService = $true
+            DependsOn = "[SqlServerRole]AddDomainAdminAccountToSysAdmin"
+        }
+
+
+        #The SPNs seem to end up in the wrong containers (COMPUTERNAME) as opposed to Domain user
+        #This is a bit of a hack to make sure it is straight. 
+        Script ResetSpns
+        {
+            GetScript = { 
+                return @{ 'Result' = $true }
+            }
+
+            SetScript = {
+                $spn = "MSSQLSvc/" + $using:computerName + "." + $using:DomainName
+                
+                $cmd = "setspn -D $spn $using:computerName"
+                Write-Verbose $cmd
+                Invoke-Expression $cmd
+
+                $cmd = "setspn -A $spn $using:domainUsername"
+                Write-Verbose $cmd
+                Invoke-Expression $cmd
+
+                $spn = "MSSQLSvc/" + $using:computerName + "." + $using:DomainName + ":1433"
+                
+                $cmd = "setspn -D $spn $using:computerName"
+                Write-Verbose $cmd
+                Invoke-Expression $cmd
+
+                $cmd = "setspn -A $spn $using:domainUsername"
+                Write-Verbose $cmd
+                Invoke-Expression $cmd
+            }
+
+            TestScript = {
+                $false
+            }
+
+            DependsOn = "[SqlServiceAccount]SetServiceAcccount_User"
+            PsDscRunAsCredential = $DomainCreds
+        }
+
+
         if ($ClusterOwnerNode -eq $env:COMPUTERNAME) { #This is the primary
             xCluster CreateCluster
             {
                 Name                          = $ClusterNameDummy
                 StaticIPAddress               = $ipdummy
                 DomainAdministratorCredential = $DomainCreds
-                DependsOn                     = "[WindowsFeature]FCPSCMD"
+                DependsOn                     = "[WindowsFeature]FCPSCMD","[Script]ResetSpns"
             }
 
             Script SetCloudWitness
@@ -259,7 +313,7 @@ configuration SQLServerPrepareDsc
                 Name             = $ClusterNameDummy
                 RetryIntervalSec = 10
                 RetryCount       = 60
-                DependsOn        = "[WindowsFeature]FCPSCMD"
+                DependsOn        = "[WindowsFeature]FCPSCMD","[Script]ResetSpns"
             }
 
             #We have to do this manually due to a problem with xCluster:
@@ -330,15 +384,6 @@ configuration SQLServerPrepareDsc
                 }
         }
 
-        #TODO: We should create a dedicated user for this.
-        SqlServiceAccount SetServiceAcccount_User
-        {
-			ServerName = "$env:COMPUTERNAME"
-			InstanceName = "MSSQLSERVER"
-            ServiceType    = 'DatabaseEngine'
-            ServiceAccount = $DomainCreds
-            RestartService = $true
-        }
 
         LocalConfigurationManager 
         {
