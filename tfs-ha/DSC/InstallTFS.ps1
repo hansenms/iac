@@ -158,12 +158,10 @@ configuration TFSInstallDsc
             }
             SetScript = {
                 $siteBindings = "https:*:443:" + $using:hostName + "." + $using:DomainName + ":My:" + $using:SslThumbprint
-                $siteBindings += ",https:*:443:" + $using:hostName + ":My:" + $using:SslThumbprint 
                 $siteBindings += ",https:*:443:" + $using:GlobalSiteName + "." + $using:DomainName + ":My:" + $using:SslThumbprint
-                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + ":My:" + $using:SslThumbprint 
                 $siteBindings += ",http:*:80:"
 
-                $publicUrl = "https://$using:hostName"
+                $publicUrl = "http://$using:hostName"
 
                 $cmd = ""
                 if ($using:isPrimaryInstance) {                
@@ -175,7 +173,7 @@ configuration TFSInstallDsc
                 Write-Verbose "$cmd"
                 Invoke-Expression $cmd | Write-Verbose
 
-                $publicUrl = "https://$using:GlobalSiteName"
+                $publicUrl = "https://$using:GlobalSiteName" + "." + $using:DomainName
                 $cmd = "& '$using:TfsConfigExe' settings /publicUrl:$publicUrl"
                 Write-Verbose "$cmd"
                 Invoke-Expression $cmd | Write-Verbose
