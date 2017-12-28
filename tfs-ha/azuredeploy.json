@@ -1,0 +1,320 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subnetId": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "EnterpriseAdmin"
+    },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "SQLClusterAG"
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "devnet.contoso.us"
+    },
+    "encryptionConfiguration": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "vmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter"
+    },
+    "tfsVmInstanceCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "LBIpAddress": {
+      "type": "string",
+      "defaultValue": "10.0.1.40"
+    },
+    "secrets": {
+      "type": "array",
+      "defaultValue": []
+    },
+    "sslThumbprint": {
+      "type": "string",
+      "defaultValue": "generate"
+    }
+  },
+  "variables": {
+    "baseUri": "[deployment().properties.templateLink.uri]",
+    "TFSInstallModuleURL": "[uri(variables('baseUri'), 'DSC/InstallTFS.ps1.zip')]",
+    "TFSInstallFunction": "InstallTFS.ps1\\TFSInstallDsc",
+    "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+    "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsvmdiag')]",
+    "HASetName": "TFSHASet",
+    "tfsVMPrefix": "TFS",
+    "LBName": "SQLLB",
+    "LBBEName": "[concat(variables('LBName'),'BE')]",
+    "LBFEName": "[concat(variables('LBName'),'FE')]",
+    "LBProbeName": "[concat(variables('LBName'),'Probe')]",
+    "LBBEAddressPoolID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/backendAddressPools/',variables('LBBEName'))]",
+    "LBFEConfigID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/frontendIPConfigurations/',variables('LBFEName'))]",
+    "LBProbeID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/probes/',variables('LBProbeName'))]",
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "name": "[variables('HASetName')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [],
+      "properties": {
+        "platformUpdateDomainCount": 2,
+        "platformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "name": "[variables('LBName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('LBFEName')]",
+            "properties": {
+              "privateIPAddress": "[parameters('LBIpAddress')]",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('LBBEName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "LBRule1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('LBFEConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('LBBEAddressPoolID')]"
+              },
+              "probe": {
+                "id": "[variables('LBProbeID')]"
+              },
+              "frontendPort": 80,
+              "backendPort": 80,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "loadDistribution": "SourceIP"
+            }
+          },
+          {
+            "name": "LBRule2",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('LBFEConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('LBBEAddressPoolID')]"
+              },
+              "probe": {
+                "id": "[variables('LBProbeID')]"
+              },
+              "frontendPort": 443,
+              "backendPort": 443,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "loadDistribution": "SourceIP"
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('LBProbeName')]",
+            "properties": {
+              "protocol": "Http",
+              "port": 59999,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2,
+              "requestPath": "/"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat('TFSVmDeploy', copyindex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('LBName'))]"
+      ],
+      "copy": {
+        "name": "tfsvmloop",
+        "count": "[parameters('tfsVmInstanceCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('windowsVmTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[concat(variables('tfsVMPrefix'), copyindex())]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "diagStorageAccountId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+          },
+          "availabilitySetId": {
+            "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
+          },
+          "imageSku": {
+            "value": "[parameters('imageSku')]"
+          },
+          "LoadBalancerBEId": {
+            "value": "[variables('LBBEAddressPoolID')]"
+          },
+          "secrets": {
+            "value": "[parameters('secrets')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('tfsVmPrefix'), copyindex(), '/joindomain')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', concat('TFSVmDeploy', copyindex()))]"
+      ],
+      "copy": {
+        "name": "tfsvmjoinloop",
+        "count": "[parameters('tfsVmInstanceCount')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "Name": "[parameters('domainName')]",
+          "OUPath": "",
+          "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
+          "Restart": "true",
+          "Options": "3"
+        },
+        "protectedSettings": {
+          "Password": "[parameters('adminPassword')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('tfsVmPrefix'), copyindex(), '/configuretfs', copyindex())]",
+      "dependsOn": [
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('tfsVmPrefix'), copyindex())), '/extensions/joindomain')]"
+      ],
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "tfsconfigloop",
+        "count": 2,
+        "mode": "Serial",
+        "batchSize": 1
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesURL": "[variables('TFSInstallModuleURL')]",
+          "configurationFunction": "[variables('TFSInstallFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "privateSettingsRef:adminPassword"
+            },
+            "SqlServerInstance": "[parameters('sqlServerName')]",
+            "primaryInstance": "[concat(variables('TfsVmPrefix'), '0')]",
+            "GlobalSiteIP": "[parameters('LBIpAddress')]",
+            "GlobalSiteName": "TFS",
+            "DnsServer": "DC1",
+            "TFSVersion": "TFS2018",
+            "SslThumbprint": "[parameters('sslThumbprint')]"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

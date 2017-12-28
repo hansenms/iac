@@ -5,6 +5,13 @@
     "subnetId": {
       "type": "string"
     },
+    "nodeIpAddresses": {
+      "type": "array",
+      "defaultValue": [
+        "10.0.1.10",
+        "10.0.1.11"
+      ]
+    },
     "clusterIpAddress": {
       "type": "string",
       "defaultValue": "10.0.1.30"
@@ -198,6 +205,9 @@
           },
           "subnetId": {
             "value": "[parameters('subnetId')]"
+          },
+          "fixedPrivateIp": {
+            "value": "[parameters('nodeIpAddresses')[copyIndex()]]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
