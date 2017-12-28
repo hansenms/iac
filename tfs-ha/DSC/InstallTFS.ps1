@@ -26,7 +26,7 @@ configuration TFSInstallDsc
         [Parameter(Mandatory=$false)]
         [String]$ProbePort = '59999',
 
-        [Parameters(Mandatory=$false)]
+        [Parameter(Mandatory=$false)]
         [String]$SslThumbprint = "generate",
 
         [Parameter(Mandatory=$false)]
