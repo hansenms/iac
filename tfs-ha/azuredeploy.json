@@ -84,7 +84,7 @@
     "TFSInstallModuleURL": "[uri(variables('baseUri'), 'DSC/InstallTFS.ps1.zip')]",
     "TFSInstallFunction": "InstallTFS.ps1\\TFSInstallDsc",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
-    "sqlAddToAGTemplateURL": "[uri(variables('baseUri'),'../sqlalwayson/adddbtoag.json')]",
+    "sqlAddToAGTemplateURL": "[uri(variables('baseUri'),'../sql-alwayson/adddbtoag.json')]",
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsvmdiag')]",
     "HASetName": "TFSHASet",
     "tfsVMPrefix": "TFS",
