@@ -16,14 +16,6 @@
       "type": "string",
       "defaultValue": "SQLClusterAG"
     },
-    "sqlServerPrimaryServer": {
-      "type": "string",
-      "defaultValue": "SQL0"
-    },
-    "sqlResourceGroupName": {
-      "type": "string",
-      "defaultValue": ""
-    },
     "domainName": {
       "type": "string",
       "defaultValue": "devnet.contoso.us"
@@ -84,7 +76,6 @@
     "TFSInstallModuleURL": "[uri(variables('baseUri'), 'DSC/InstallTFS.ps1.zip')]",
     "TFSInstallFunction": "InstallTFS.ps1\\TFSInstallDsc",
     "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
-    "sqlAddToAGTemplateURL": "[uri(variables('baseUri'),'../sql-alwayson/adddbtoag.json')]",
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsvmdiag')]",
     "HASetName": "TFSHASet",
     "tfsVMPrefix": "TFS",
@@ -320,48 +311,6 @@
         "protectedSettings": {
           "items": {
             "adminPassword": "[parameters('adminPassword')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "AddDBToAG",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
-      "resourceGroup": "[parameters('sqlResourceGroupName')]",
-      "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('tfsVmPrefix'), '1')), '/extensions/configuretfs1')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('sqlAddToAGTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "vmName": {
-            "value": "[parameters('sqlServerPrimaryServer')]"
-          },
-          "domainName": {
-            "value": "[parameters('domainName')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "sqlServerAG": {
-            "value": "[parameters('sqlServerName')]"
-          },
-          "sqlDatabases": {
-            "value": [
-              "Tfs_Configuration",
-              "Tfs_DefaultCollection"
-            ]
-          },
-          "sqlInstanceName": {
-            "value": "MSSQLSERVER"
           }
         }
       }

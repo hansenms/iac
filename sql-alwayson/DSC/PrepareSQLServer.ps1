@@ -170,6 +170,7 @@ configuration SQLServerPrepareDsc
 
         #The SPNs seem to end up in the wrong containers (COMPUTERNAME) as opposed to Domain user
         #This is a bit of a hack to make sure it is straight. 
+        # - See also: https://support.microsoft.com/en-sg/help/811889/how-to-troubleshoot-the-cannot-generate-sspi-context-error-message
         Script ResetSpns
         {
             GetScript = { 
