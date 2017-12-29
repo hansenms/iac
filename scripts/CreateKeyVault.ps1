@@ -37,7 +37,7 @@ $kek = Add-AzureKeyVaultKey -VaultName $KeyVaultName -Name "DiskKeyEncryptionKey
 
 # Specify privileges to the vault for the AAD application - https://msdn.microsoft.com/en-us/library/mt603625.aspx
 Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -ServicePrincipalName $aadClientID -PermissionsToKeys wrapKey -PermissionsToSecrets set;
-Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -EnabledForDiskEncryption -EnabledForDeployment
+Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -EnabledForDiskEncryption -EnabledForDeployment -EnabledForTemplateDeployment
     
 $keyVaultInfo = @{
     "AADClientID" = $aadClientID

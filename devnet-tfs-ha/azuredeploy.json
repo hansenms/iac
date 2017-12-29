@@ -39,7 +39,7 @@
                 "Standard_DS14_v2",
                 "Standard_DS15_v2"
             ],
-            "defaultValue": "Standard_D2_v2"
+            "defaultValue": "Standard_DS2_v2"
         },
         "DCVmSize": {
             "type": "string",
