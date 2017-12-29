@@ -15,6 +15,18 @@ Deploy this solution to either Azure Commercial or Azure Government:
 	<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
 </a>
 
+Deploy Build Agents
+------
+
+Deploy build agents:
+
+<a href="https://transmogrify.azurewebsites.net/tfs-ha/deployagents.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
+<a href="https://transmogrify.azurewebsites.net/tfs-ha/deployagents.json?environment=gov" target="_blank">
+	<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
+</a>
 
 To Do List
 ----------
