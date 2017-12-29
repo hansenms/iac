@@ -123,7 +123,7 @@
         {
             "name": "core-network",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2017-05-10",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -155,7 +155,7 @@
         {
             "name": "sqlalwayson",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "Microsoft.Resources/deployments/core-network"
             ],
@@ -190,7 +190,7 @@
         {
             "name": "tfs",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "Microsoft.Resources/deployments/sqlalwayson"
             ],
@@ -231,7 +231,7 @@
         {
             "name": "tfsagents",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "Microsoft.Resources/deployments/tfs"
             ],
