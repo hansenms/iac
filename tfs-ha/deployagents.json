@@ -63,7 +63,7 @@
         "VSImageOffer": "VisualStudio",
         "VSImageSku": "VS-2017-Ent-Latest-WS2016",
         "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
-        "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsagentvmdiag')]",
+        "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'agvmdiag')]",
         "HASetName": "AgentHASet",
         "agentVMPrefix": "AGENT"        
     },
