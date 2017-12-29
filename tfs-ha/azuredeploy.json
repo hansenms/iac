@@ -20,10 +20,6 @@
       "type": "string",
       "defaultValue": "devnet.contoso.us"
     },
-    "encryptionConfiguration": {
-      "type": "object",
-      "defaultValue": {}
-    },
     "vmSize": {
       "type": "string",
       "allowedValues": [
@@ -245,9 +241,6 @@
           },
           "secrets": {
             "value": "[parameters('secrets')]"
-          },
-          "encryptionConfiguration": {
-            "value": "[parameters('encryptionConfiguration')]"
           }
         }
       }

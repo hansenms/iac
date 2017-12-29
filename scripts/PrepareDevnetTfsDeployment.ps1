@@ -37,7 +37,8 @@ $SslCertificateSecretName = "SslCert"
 
 $kvrg = New-AzureRmResourceGroup -Name $KeyVaultResourceGroupName -Location $Location
 
-$keyVaultInfo = .\CreateKeyVault.ps1 -ResourceGroupName $kvrg.ResourceGroupName -KeyVaultName $KeyVaultName
+$kv = New-AzureRmKeyVault -VaultName $KeyVaultName -Location $kvrg.Location -ResourceGroupName $KeyVaultResourceGroupName
+Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -EnabledForDiskEncryption -EnabledForDeployment -EnabledForTemplateDeployment
 
 #Store domain password in keyvault. 
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $DomainAdminPasswordSecretName -SecretValue $AdminPassword
@@ -47,7 +48,7 @@ $cer = Import-AzureKeyVaultCertificate -VaultName $KeyVaultName -Name $SslCertif
 
 $secret = @{
     "sourceVault" = @{
-        "id" = $keyVaultInfo.KeyVaultResourceId
+        "id" = $kv.ResourceId
     }
     "vaultCertificates" = @(
         @{
@@ -70,18 +71,9 @@ $templateParameters = @{
     "adminPassword" = @{
         "reference" = @{
             "keyvault" = @{
-                "id" = $keyVaultInfo.KeyVaultResourceId
+                "id" = $kv.ResourceId
             }
             "secretName" = $DomainAdminPasswordSecretName
-        }
-    }
-
-    "encryptionConfiguration" = @{
-        "value" = @{
-            "aadClientID" = $keyVaultInfo.AADClientID
-            "aadClientSecret" = $keyVaultInfo.AADClientSecret
-            "keyVaultResourceId" = $keyVaultInfo.KeyVaultResourceId
-            "keyEncryptionKeyURL" = $keyVaultInfo.KeyEncryptionKeyURL
         }
     }
 

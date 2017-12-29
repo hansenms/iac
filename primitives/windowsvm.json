@@ -53,10 +53,6 @@
             "maxValue": 4,
             "defaultValue": 1
         },
-        "encryptionConfiguration": {
-            "type": "object",
-            "defaultValue": {}
-        },
         "availabilitySetId": {
             "type": "string",
             "defaultValue": ""
@@ -71,7 +67,6 @@
         }
     },
     "variables": {
-        "encryptTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'encryptvm.json')]",
         "publicipTemplateUrl": "[uri(deployment().properties.templateLink.uri, 'publicip.json')]",
         "nicName": "[concat(parameters('vmName'),'-nic')]",
         "genDiagStorageAccountName": "[concat('vmdiag', uniqueString( resourceGroup().id, deployment().name ))]",
@@ -239,40 +234,6 @@
                     "bootDiagnostics": {
                         "enabled": true,
                         "storageUri": "[reference(variables('diagStorageAccountId'),'2016-01-01').primaryEndpoints.blob]"
-                    }
-                }
-            }
-        },
-        {
-            "apiVersion": "2017-05-10",
-            "comments": "Optional encryption of VM",
-            "name": "[concat(parameters('vmName'),'-encrypt')]",
-            "type": "Microsoft.Resources/deployments",
-            "condition": "[not(empty(parameters('encryptionConfiguration')))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines',parameters('vmName'))]"                
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('encryptTemplateUrl')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters":{
-                    "vmName": {
-                        "value": "[parameters('vmName')]"
-                    },
-                    "aadClientID" :{
-                        "value": "[parameters('encryptionConfiguration').aadClientID]"
-                    },
-                    "aadClientSecret" :{
-                        "value": "[parameters('encryptionConfiguration').aadClientSecret]"
-                    },
-                    "keyVaultResourceId" :{
-                        "value": "[parameters('encryptionConfiguration').keyVaultResourceId]"
-                    },
-                    "keyEncryptionKeyURL" :{
-                        "value": "[parameters('encryptionConfiguration').keyEncryptionKeyURL]"
                     }
                 }
             }

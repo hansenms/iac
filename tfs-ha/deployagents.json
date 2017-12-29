@@ -16,10 +16,6 @@
             "type": "string",
             "defaultValue": "devnet.contoso.us"
         },
-        "encryptionConfiguration": {
-            "type": "object",
-            "defaultValue": {}
-        },
         "vmSize": {
             "type": "string",
             "allowedValues": [
@@ -140,9 +136,6 @@
               },
               "imageSku": {
                 "value": "[variables('VSImageSku')]"
-              },
-              "encryptionConfiguration": {
-                "value": "[parameters('encryptionConfiguration')]"
               }
             }
           }
