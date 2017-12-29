@@ -81,7 +81,7 @@
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsvmdiag')]",
     "HASetName": "TFSHASet",
     "tfsVMPrefix": "TFS",
-    "LBName": "SQLLB",
+    "LBName": "TFSLB",
     "LBBEName": "[concat(variables('LBName'),'BE')]",
     "LBFEName": "[concat(variables('LBName'),'FE')]",
     "LBProbeName": "[concat(variables('LBName'),'Probe')]",
