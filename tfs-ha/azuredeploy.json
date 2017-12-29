@@ -50,41 +50,11 @@
       ],
       "defaultValue": "Standard_DS2_v2"
     },
-    "agentVmSize": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_D11_v2",
-        "Standard_D12_v2",
-        "Standard_D13_v2",
-        "Standard_D14_v2",
-        "Standard_D15_v2",
-        "Standard_DS1_v2",
-        "Standard_DS2_v2",
-        "Standard_DS3_v2",
-        "Standard_DS4_v2",
-        "Standard_DS5_v2",
-        "Standard_DS11_v2",
-        "Standard_DS12_v2",
-        "Standard_DS13_v2",
-        "Standard_DS14_v2",
-        "Standard_DS15_v2"
-      ],
-      "defaultValue": "Standard_DS2_v2"
-    },
     "imageSku": {
       "type": "string",
       "defaultValue": "2016-Datacenter"
     },
     "tfsVmInstanceCount": {
-      "type": "int",
-      "defaultValue": 2
-    },
-    "buildAgentVmInstanceCount": {
       "type": "int",
       "defaultValue": 2
     },
@@ -115,7 +85,6 @@
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsvmdiag')]",
     "HASetName": "TFSHASet",
     "tfsVMPrefix": "TFS",
-    "agentVMPrefix": "AGENT",
     "LBName": "SQLLB",
     "LBBEName": "[concat(variables('LBName'),'BE')]",
     "LBFEName": "[concat(variables('LBName'),'FE')]",
@@ -123,9 +92,7 @@
     "LBBEAddressPoolID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/backendAddressPools/',variables('LBBEName'))]",
     "LBFEConfigID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/frontendIPConfigurations/',variables('LBFEName'))]",
     "LBProbeID": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('LBName')),'/probes/',variables('LBProbeName'))]",
-    "globalSiteName": "TFS",
-    "siteUrlProtocol": "[if(empty(parameters('sslThumbprint')),'http://','https://')]",
-    "TFSURL": "[concat(variables('siteUrlProtocol'), variables('globalSiteName'), '.', parameters('domainName'))]"
+    "globalSiteName": "TFS"
   },
   "resources": [
     {
@@ -278,6 +245,9 @@
           },
           "secrets": {
             "value": "[parameters('secrets')]"
+          },
+          "encryptionConfiguration": {
+            "value": "[parameters('encryptionConfiguration')]"
           }
         }
       }
@@ -346,123 +316,6 @@
             "DnsServer": "DC1",
             "TFSVersion": "TFS2018",
             "SslThumbprint": "[parameters('sslThumbprint')]"
-          }
-        },
-        "protectedSettings": {
-          "items": {
-            "adminPassword": "[parameters('adminPassword')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "[concat('agentVmDeploy', copyindex())]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
-      "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('tfsVmPrefix'), '0')), '/extensions/configuretfs0')]"
-      ],
-      "copy": {
-        "name": "agentvmloop",
-        "count": "[parameters('buildAgentVmInstanceCount')]"
-      },
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('windowsVmTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "vmName": {
-            "value": "[concat(variables('agentVMPrefix'), copyindex())]"
-          },
-          "vmSize": {
-            "value": "[parameters('agentVmSize')]"
-          },
-          "subnetId": {
-            "value": "[parameters('subnetId')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "diagStorageAccountId": {
-            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
-          },
-          "availabilitySetId": {
-            "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
-          },
-          "imagePublisher": {
-            "value": "[variables('VSImagePublisher')]"
-          },
-          "imageOffer": {
-            "value": "[variables('VSImageOffer')]"
-          },
-          "imageSku": {
-            "value": "[variables('VSImageSku')]"
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('agentVmPrefix'), copyindex(), '/joindomain')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', concat('agentVmDeploy', copyindex()))]"
-      ],
-      "copy": {
-        "name": "agentvmjoinloop",
-        "count": "[parameters('buildAgentVmInstanceCount')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "JsonADDomainExtension",
-        "typeHandlerVersion": "1.3",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "Name": "[parameters('domainName')]",
-          "OUPath": "",
-          "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
-          "Restart": "true",
-          "Options": "3"
-        },
-        "protectedSettings": {
-          "Password": "[parameters('adminPassword')]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('agentVmPrefix'), copyindex(), '/configureagent', copyindex())]",
-      "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('agentVmPrefix'), copyindex())), '/extensions/joindomain')]"
-      ],
-      "apiVersion": "2016-03-30",
-      "copy": {
-        "name": "agentconfigloop",
-        "count": "[parameters('buildAgentVmInstanceCount')]",
-      },
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "modulesURL": "[variables('VSTSAgentInstallModuleURL')]",
-          "configurationFunction": "[variables('VSTSAgentInstallFunction')]",
-          "properties": {
-            "domainName": "[parameters('domainName')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUserName')]",
-              "password": "privateSettingsRef:adminPassword"
-            },
-            "TFSUrl": "[variables('TFSURL')]",
-            "VSTSAgentUrl": "[variables('agentDownloadUrl')]",
           }
         },
         "protectedSettings": {

@@ -27,6 +27,10 @@
       "type": "string",
       "defaultValue": "devnet.contoso.us"
     },
+    "encryptionConfiguration": {
+      "type": "object",
+      "defaultValue": {}
+    },
     "sqlVmSize": {
       "type": "string",
       "allowedValues": [
@@ -232,6 +236,9 @@
           },
           "LoadBalancerBEId": {
             "value": "[variables('sqlBEAddressPoolID')]"
+          },
+          "encryptionConfiguration": {
+            "value": "[parameters('encryptionConfiguration')]"
           }
         }
       }

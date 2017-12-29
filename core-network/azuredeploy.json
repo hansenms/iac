@@ -13,6 +13,10 @@
       "type": "string",
       "defaultValue": "devnet.contoso.us"
     },
+    "encryptionConfiguration": {
+      "type": "object",
+      "defaultValue": {}
+    },
     "jumpBoxVmSize": {
       "type": "string",
       "allowedValues": [
@@ -184,6 +188,9 @@
           },
           "availabilitySetId": {
             "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('DCHASetName'))]"
+          },
+          "encryptionConfiguration": {
+            "value": "[parameters('encryptionConfiguration')]"
           }
         }
       }
@@ -227,6 +234,9 @@
           },
           "availabilitySetId": {
             "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('DCHASetName'))]"
+          },
+          "encryptionConfiguration": {
+            "value": "[parameters('encryptionConfiguration')]"
           }
         }
       }
@@ -267,6 +277,9 @@
           },
           "assignPublicIP": {
             "value": true
+          },
+          "encryptionConfiguration": {
+            "value": "[parameters('encryptionConfiguration')]"
           }
         }
       }

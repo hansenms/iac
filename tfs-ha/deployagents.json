@@ -1,0 +1,217 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subnetId": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "EnterpriseAdmin"
+        },
+        "domainName": {
+            "type": "string",
+            "defaultValue": "devnet.contoso.us"
+        },
+        "encryptionConfiguration": {
+            "type": "object",
+            "defaultValue": {}
+        },
+        "vmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_D1_v2",
+                "Standard_D2_v2",
+                "Standard_D3_v2",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_D11_v2",
+                "Standard_D12_v2",
+                "Standard_D13_v2",
+                "Standard_D14_v2",
+                "Standard_D15_v2",
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        },
+        "buildAgentVmInstanceCount": {
+          "type": "int",
+          "defaultValue": 2
+        },
+        "tfsServerUrl": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "VSTSAgentInstallModuleURL": "[uri(variables('baseUri'), 'DSC/InstallVSTSAgent.ps1.zip')]",
+        "VSTSAgentInstallFunction": "InstallVSTSAgent.ps1\\VSTSAgentInstallDsc",
+        "agentDownloadUrl": "https://vstsagentpackage.azureedge.net/agent/2.127.0/vsts-agent-win-x64-2.127.0.zip",
+        "VSImagePublisher": "MicrosoftVisualStudio",
+        "VSImageOffer": "VisualStudio",
+        "VSImageSku": "VS-2017-Ent-Latest-WS2016",
+        "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+        "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsagentvmdiag')]",
+        "HASetName": "AgentHASet",
+        "agentVMPrefix": "AGENT"        
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('diagStorageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+              "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+          "name": "[variables('HASetName')]",
+          "type": "Microsoft.Compute/availabilitySets",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2017-03-30",
+          "dependsOn": [],
+          "properties": {
+            "platformUpdateDomainCount": 2,
+            "platformFaultDomainCount": 2
+          },
+          "sku": {
+            "name": "Aligned"
+          }
+        },
+        {
+          "name": "[concat('agentVmDeploy', copyindex())]",
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2017-05-10",
+          "dependsOn": [
+            "[concat(resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
+          ],
+          "copy": {
+            "name": "agentvmloop",
+            "count": "[parameters('buildAgentVmInstanceCount')]"
+          },
+          "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+              "uri": "[variables('windowsVmTemplateURL')]",
+              "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+              "vmName": {
+                "value": "[concat(variables('agentVMPrefix'), copyindex())]"
+              },
+              "vmSize": {
+                "value": "[parameters('vmSize')]"
+              },
+              "subnetId": {
+                "value": "[parameters('subnetId')]"
+              },
+              "adminUsername": {
+                "value": "[parameters('adminUsername')]"
+              },
+              "adminPassword": {
+                "value": "[parameters('adminPassword')]"
+              },
+              "diagStorageAccountId": {
+                "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+              },
+              "availabilitySetId": {
+                "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
+              },
+              "imagePublisher": {
+                "value": "[variables('VSImagePublisher')]"
+              },
+              "imageOffer": {
+                "value": "[variables('VSImageOffer')]"
+              },
+              "imageSku": {
+                "value": "[variables('VSImageSku')]"
+              },
+              "encryptionConfiguration": {
+                "value": "[parameters('encryptionConfiguration')]"
+              }
+            }
+          }
+        },
+        {
+          "apiVersion": "2015-06-15",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('agentVmPrefix'), copyindex(), '/joindomain')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Resources/deployments', concat('agentVmDeploy', copyindex()))]"
+          ],
+          "copy": {
+            "name": "agentvmjoinloop",
+            "count": "[parameters('buildAgentVmInstanceCount')]"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.3",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "Name": "[parameters('domainName')]",
+              "OUPath": "",
+              "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
+              "Restart": "true",
+              "Options": "3"
+            },
+            "protectedSettings": {
+              "Password": "[parameters('adminPassword')]"
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('agentVmPrefix'), copyindex(), '/configureagent', copyindex())]",
+          "dependsOn": [
+            "[concat(resourceId('Microsoft.Compute/virtualMachines', concat(variables('agentVmPrefix'), copyindex())), '/extensions/joindomain')]"
+          ],
+          "apiVersion": "2016-03-30",
+          "copy": {
+            "name": "agentconfigloop",
+            "count": "[parameters('buildAgentVmInstanceCount')]",
+          },
+          "location": "[resourceGroup().location]",
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.21",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "modulesURL": "[variables('VSTSAgentInstallModuleURL')]",
+              "configurationFunction": "[variables('VSTSAgentInstallFunction')]",
+              "properties": {
+                "domainName": "[parameters('domainName')]",
+                "adminCreds": {
+                  "userName": "[parameters('adminUserName')]",
+                  "password": "privateSettingsRef:adminPassword"
+                },
+                "TFSUrl": "[parameters('tfsServerUrl')]",
+                "VSTSAgentUrl": "[variables('agentDownloadUrl')]",
+              }
+            },
+            "protectedSettings": {
+              "items": {
+                "adminPassword": "[parameters('adminPassword')]"
+              }
+            }
+          }
+        }
+    ]
+}
