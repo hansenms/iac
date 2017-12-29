@@ -225,9 +225,23 @@ configuration TFSInstallDsc
             DependsOn       = '[xWebsite]ProbeWebSite'             
         }
 
+        Script Reboot
+        {
+            TestScript = {
+                return (Test-Path HKLM:\SOFTWARE\MyMainKey\RebootKey)
+            }
+            SetScript = {
+                New-Item -Path HKLM:\SOFTWARE\MyMainKey\RebootKey -Force
+                 $global:DSCMachineStatus = 1 
+    
+            }
+            GetScript = { return @{result = 'result'}}
+            DependsOn = '[xFirewall]DatabaseEngineFirewallRule'
+        }
+
         xPendingReboot PostConfigReboot {
             Name = "Check for a pending reboot before changing anything"
-            DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
+            DependsOn = "[Script]Reboot"
         }
     }
 }
