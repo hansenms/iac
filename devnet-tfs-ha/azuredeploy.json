@@ -216,7 +216,7 @@
                     "encryptionConfiguration": {
                         "value": "[parameters('encryptionConfiguration')]"
                     },
-                    "tfsVmSize": {
+                    "vmSize": {
                         "value": "[parameters('tfsVmSize')]"
                     },
                     "secrets": {
