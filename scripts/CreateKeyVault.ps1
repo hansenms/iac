@@ -3,35 +3,26 @@ param(
     [String]$ResourceGroupName,
 
     [Parameter(Mandatory = $true, Position = 2)]
-    [String]$KeyVaultName,
-
-    [Parameter(Mandatory = $false, Position = 3)]
-    [ValidateSet("AzureUsGovernment", "AzureCloud")]
-    [String]$Environment = "AzureUsGovernment"
+    [String]$KeyVaultName
 )
 
-$rg = Get-AzureRmResourceGroup -Name $ResourceGroupName -ErrorAction 0 -ErrorVariable NotPresent
-if ($NotPresent) {
-    Write-Host "Resource Group: $ResourceGroupName not found"
-    return 1;
-}
+$azcontext = Get-AzureRmContext
+if ([string]::IsNullOrEmpty($azcontext.Account)) {
+    throw "User not logged into Azure."   
+} 
 
-$azcontext = Get-AzureRmContext
-if ([string]::IsNullOrEmpty($azcontext.Account) -or
-    !($azcontext.Environment.Name -eq $Environment)) {
-    Login-AzureRmAccount -Environment $Environment        
-}
-$azcontext = Get-AzureRmContext
+$rg = Get-AzureRmResourceGroup -Name $ResourceGroupName
 
 # Create a new AD application
 $identifierUri = [string]::Format("http://localhost:8080/{0}", [Guid]::NewGuid().ToString("N"))
 $defaultHomePage = 'http://contoso.com'
 $now = [System.DateTime]::Now
 $oneYearFromNow = $now.AddYears(1)
-$aadClientSecret = [System.Convert]::ToBase64String($([guid]::NewGuid()).ToByteArray())
+$aadClientSecret =  [System.Convert]::ToBase64String($([guid]::NewGuid()).ToByteArray())
+$aadClientPassword = ConvertTo-SecureString -String $aadClientSecret -AsPlainText -Force
 $aadAppName = $KeyVaultName + "aadapp"
 
-$ADApp = New-AzureRmADApplication -DisplayName $aadAppName -HomePage $defaultHomePage -IdentifierUris $identifierUri  -StartDate $now -EndDate $oneYearFromNow -Password $aadClientSecret
+$ADApp = New-AzureRmADApplication -DisplayName $aadAppName -HomePage $defaultHomePage -IdentifierUris $identifierUri  -StartDate $now -EndDate $oneYearFromNow -Password $aadClientPassword
 $servicePrincipal = New-AzureRmADServicePrincipal -ApplicationId $ADApp.ApplicationId
 $SvcPrincipals = (Get-AzureRmADServicePrincipal -SearchString $aadAppName)
 if (-not $SvcPrincipals) {
@@ -46,7 +37,7 @@ $kek = Add-AzureKeyVaultKey -VaultName $KeyVaultName -Name "DiskKeyEncryptionKey
 
 # Specify privileges to the vault for the AAD application - https://msdn.microsoft.com/en-us/library/mt603625.aspx
 Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -ServicePrincipalName $aadClientID -PermissionsToKeys wrapKey -PermissionsToSecrets set;
-Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -EnabledForDiskEncryption
+Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -EnabledForDiskEncryption -EnabledForDeployment
     
 $keyVaultInfo = @{
     "AADClientID" = $aadClientID

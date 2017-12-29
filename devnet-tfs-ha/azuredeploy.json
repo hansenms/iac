@@ -1,0 +1,271 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "EnterpriseAdmin"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "domainName": {
+            "type": "string",
+            "defaultValue": "devnet.contoso.us"
+        },
+        "encryptionConfiguration": {
+            "type": "object",
+            "defaultValue": {}
+        },
+        "secrets": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "sslThumbprint": {
+            "type": "string",
+            "defaultValue": "generate"
+        },
+        "jumpBoxVmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_D2_v2"
+        },
+        "DCVmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS1_v2"
+        },
+        "tfsVmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        },
+        "sqlVmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS4_v2"
+        },
+        "tfsAgentVmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        }
+    },
+    "variables": {
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "coreNetworkTemplateUri": "[uri(variables('baseUri'), '../core-network/azuredeploy.json')]",
+        "sqlTemplateUri": "[uri(variables('baseUri'), '../sql-alwayson/azuredeploy.json')]",
+        "tfsTemplateUri": "[uri(variables('baseUri'), '../tfs-ha/azuredeploy.json')]",
+        "agentTemplateUri": "[uri(variables('baseUri'), '../tfs-ha/deployagents.json')]",
+        "coreVnetName": "corevnet",
+        "corevnetDevOpsSubnetName": "Subnet-2",
+        "vnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
+        "devopsdubnetid": "[concat(variables('vnetid'), '/subnets/', variables('corevnetDevOpsSubnetName'))]",
+        "tfsServerProtocol": "[if(empty(parameters('sslThumbprint')),'http://','https://')]",
+        "tfsServerUrl": "[concat(variables('tfsServerProtocol'),'tfs.',parameters('domainName'))]"
+    },
+    "resources": [
+        {
+            "name": "core-network",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('coreNetworkTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "domainName": {
+                        "value": "[parameters('domainName')]"
+                    },
+                    "jumpBoxVmSize": {
+                        "value": "[parameters('jumpBoxVmSize')]"
+                    },
+                    "DCVmSize": {
+                        "value": "[parameters('DCVmSize')]"
+                    },
+                    "encryptionConfiguration": {
+                        "value": "[parameters('encryptionConfiguration')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "sqlalwayson",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/core-network"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('sqlTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "subnetId": {
+                        "value": "[variables('devopsdubnetid')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "domainName": {
+                        "value": "[parameters('domainName')]"
+                    },
+                    "encryptionConfiguration": {
+                        "value": "[parameters('encryptionConfiguration')]"
+                    },
+                    "sqlVmSize": {
+                        "value": "[parameters('sqlVmSize')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "tfs",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/sqlalwayson"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('tfsTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "subnetId": {
+                        "value": "[variables('devopsdubnetid')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "domainName": {
+                        "value": "[parameters('domainName')]"
+                    },
+                    "encryptionConfiguration": {
+                        "value": "[parameters('encryptionConfiguration')]"
+                    },
+                    "tfsVmSize": {
+                        "value": "[parameters('tfsVmSize')]"
+                    },
+                    "secrets": {
+                        "value": "[parameters('secrets')]"
+                    },
+                    "sslThumbprint": {
+                        "value": "[parameters('sslThumbprint')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "tfsagents",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/tfs"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('agentTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "subnetId": {
+                        "value": "[variables('devopsdubnetid')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "domainName": {
+                        "value": "[parameters('domainName')]"
+                    },
+                    "encryptionConfiguration": {
+                        "value": "[parameters('encryptionConfiguration')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('tfsAgentVmSize')]"
+                    },
+                    "tfsServerUrl": {
+                        "value": "[variables('tfsServerUrl')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
