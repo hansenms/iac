@@ -98,7 +98,7 @@
           "type": "Microsoft.Resources/deployments",
           "apiVersion": "2017-05-10",
           "dependsOn": [
-            "[concat(resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
+            "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
           ],
           "copy": {
             "name": "agentvmloop",
