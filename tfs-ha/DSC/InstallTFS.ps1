@@ -224,5 +224,10 @@ configuration TFSInstallDsc
             Ensure = "Present"
             DependsOn       = '[xWebsite]ProbeWebSite'             
         }
+
+        xPendingReboot PostConfigReboot {
+            Name = "Check for a pending reboot before changing anything"
+            DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
+        }
     }
 }
