@@ -22,13 +22,11 @@ Some items that still need work. Feel free to contribute back:
 
 * Create service user (domain user) for running SQL services.
 * Add more than one replica. 
-* Pass encryption parameters to VMs (use disk encryption in [windowsvm](../primitives/windowsvm.json) primitive)
 * Add a default database. 
 * Parameterize settings
     * Patching schedule
     * Availability Group settings (synchronous, asynchronous, etc)
-
-
+    
 
 Deploy
 ------
