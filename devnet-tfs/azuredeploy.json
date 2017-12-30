@@ -13,6 +13,14 @@
       "type": "string",
       "defaultValue": "devnet.contoso.us"
     },
+    "secrets": {
+        "type": "array",
+        "defaultValue": []
+    },
+    "sslThumbprint": {
+        "type": "string",
+        "defaultValue": "generate"
+    },
     "jumpBoxVmSize": {
       "type": "string",
       "allowedValues": [
@@ -167,6 +175,12 @@
           },
           "tfsAgentVmSize": {
             "value": "[parameters('tfsAgentVmSize')]"
+          },
+          "secrets": {
+              "value": "[parameters('secrets')]"
+          },
+          "sslThumbprint": {
+              "value": "[parameters('sslThumbprint')]"
           }
         }
       }
