@@ -158,7 +158,11 @@ configuration TFSInstallDsc
             }
             SetScript = {
                 $siteBindings = "https:*:443:" + $using:hostName + "." + $using:DomainName + ":My:" + $using:SslThumbprint
-                $siteBindings += ",https:*:443:" + $using:GlobalSiteName + "." + $using:DomainName + ":My:" + $using:SslThumbprint
+
+                if ($using:hostName -ne $using:GlobalSiteName) {
+                    $siteBindings += ",https:*:443:" + $using:GlobalSiteName + "." + $using:DomainName + ":My:" + $using:SslThumbprint
+                }
+
                 $siteBindings += ",http:*:80:"
 
                 $publicUrl = "http://$using:hostName"
@@ -225,23 +229,9 @@ configuration TFSInstallDsc
             DependsOn       = '[xWebsite]ProbeWebSite'             
         }
 
-        Script Reboot
-        {
-            TestScript = {
-                return (Test-Path HKLM:\SOFTWARE\MyMainKey\RebootKey)
-            }
-            SetScript = {
-                New-Item -Path HKLM:\SOFTWARE\MyMainKey\RebootKey -Force
-                 $global:DSCMachineStatus = 1 
-    
-            }
-            GetScript = { return @{result = 'result'}}
-            DependsOn = '[xFirewall]DatabaseEngineFirewallRule'
-        }
-
         xPendingReboot PostConfigReboot {
             Name = "Check for a pending reboot before changing anything"
-            DependsOn = "[Script]Reboot"
+            DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
         }
     }
 }
