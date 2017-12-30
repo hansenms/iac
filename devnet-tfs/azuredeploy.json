@@ -100,6 +100,10 @@
         "Standard_DS15_v2"
       ],
       "defaultValue": "Standard_DS2_v2"
+    },
+    "buildAgentVmInstanceCount": {
+      "type": "int",
+      "defaultValue": 1
     }
   },
   "variables": {
@@ -181,6 +185,9 @@
           },
           "sslThumbprint": {
               "value": "[parameters('sslThumbprint')]"
+          },
+          "buildAgentVmInstanceCount": {
+            "value": "[parameters('buildAgentVmInstanceCount')]"
           }
         }
       }

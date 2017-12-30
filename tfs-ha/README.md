@@ -1,6 +1,9 @@
 High Availability Team Foundation Server
 ----------------------------------------
 
+This folder contains two templates, [`azuredeploy.json`](azuredeploy.json) will deploy a high-availability version of the Team Foundation Server and [`deployagents.json`](deployagents.json) can be used to deploy build agents. The templates assume that you already have established some network infrastructure with domain controller(s). You can use the [core-network](../core-network) template to deploy that. You also need a SQL Server, for the high-availability deployment, you can use the [sql-alwayson](../sql-alwayson) template. 
+
+
 
 Deploy
 ------

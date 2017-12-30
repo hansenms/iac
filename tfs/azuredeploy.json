@@ -109,6 +109,10 @@
     "sslThumbprint": {
       "type": "string",
       "defaultValue": "generate"
+    },
+    "buildAgentVmInstanceCount": {
+      "type": "int",
+      "defaultValue": 1
     }
   },
   "variables": {
@@ -433,6 +437,9 @@
           },
           "tfsServerUrl": {
             "value": "[variables('tfsServerUrl')]"
+          },
+          "buildAgentVmInstanceCount": {
+            "value": "[parameters('buildAgentVmInstanceCount')]"
           }
         }
       }
