@@ -271,12 +271,6 @@
         "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsSqlVmName')), '/extensions/joindomain')]"
       ],
       "apiVersion": "2016-03-30",
-      "copy": {
-        "name": "sqlconfigloop",
-        "count": 2,
-        "mode": "Serial",
-        "batchSize": 1
-      },
       "location": "[resourceGroup().location]",
       "properties": {
         "publisher": "Microsoft.Powershell",
