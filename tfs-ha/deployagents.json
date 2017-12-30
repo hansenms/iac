@@ -61,6 +61,7 @@
         "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
         "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'agvmdiag')]",
         "HASetName": "AgentHASet",
+        "HASetId": "[if(greater(parameters('buildAgentVmInstanceCount'),1),resourceId('Microsoft.Compute/availabilitySets',variables('HASetName')),'')]",
         "agentVMPrefix": "AGENT"        
     },
     "resources": [
@@ -80,6 +81,7 @@
           "type": "Microsoft.Compute/availabilitySets",
           "location": "[resourceGroup().location]",
           "apiVersion": "2017-03-30",
+          "condition": "[greater(parameters('buildAgentVmInstanceCount'),1)]",
           "dependsOn": [],
           "properties": {
             "platformUpdateDomainCount": 2,
@@ -126,7 +128,7 @@
                 "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
               },
               "availabilitySetId": {
-                "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
+                "value": "[variables('HASetId')]"
               },
               "imagePublisher": {
                 "value": "[variables('VSImagePublisher')]"

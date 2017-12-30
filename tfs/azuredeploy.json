@@ -101,33 +101,24 @@
         "Standard_DS15_v2"
       ],
       "defaultValue": "Standard_D2_v2"
-    },
-    "artifactBaseUrl": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/hansenms/iac/master/"
     }
   },
   "variables": {
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tfsdiag')]",
-    "tfsNicName": "tfsNIC",
     "tfsVmName": "TFS",
-    "tfsSqlNicName": "tfsSQLNIC",
     "tfsSqlVmName": "TFSSQL",
     "windowsOSVersion": "2016-Datacenter",
     "SQLimagePublisher": "MicrosoftSQLServer",
     "SQLimageOffer": "SQL2016SP1-WS2016",
     "SQLimageSku": "Standard",
-    "SQLConfigModulesURL": "[concat(parameters('artifactBaseUrl'),'/tfs/DSC/TFSSQLServerConfig.ps1.zip')]",
+    "baseUri": "[deployment().properties.templateLink.uri]",
+    "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+    "SQLConfigModulesURL": "[uri(variables('baseUri'),'DSC/TFSSQLServerConfig.ps1.zip')]",
     "SQLServerConfigurationFunction": "TFSSQLServerConfig.ps1\\TFSSQLServerDsc",
-    "TFSConfigModulesURL": "[concat(parameters('artifactBaseUrl'),'/tfs/DSC/InstallTFS.ps1.zip')]",
-    "TFSConfigurationFunction": "InstallTFS.ps1\\TFSInstallDsc",
+    "TFSInstallModuleURL": "[uri(variables('baseUri'), '../tfs-ha/DSC/InstallTFS.ps1.zip')]",
+    "TFSInstallFunction": "InstallTFS.ps1\\TFSInstallDsc",
     "TFSVS2017AgentVmName": "VS2017Agent",
-    "TFSVS2017AgentNicName": "VS2017Nic",
-    "VSImagePublisher": "MicrosoftVisualStudio",
-    "VSImageOffer": "VisualStudio",
-    "VSImageSku": "VS-2017-Ent-Latest-WS2016",
-    "VSTSAgentConfigModulesURL": "[concat(parameters('artifactBaseUrl'),'/tfs/DSC/InstallVSTSAgent.ps1.zip')]",
-    "VSTSAgentConfigurationFunction": "InstallVSTSAgent.ps1\\VSTSAgentInstallDsc"
+    "agentTemplateUri": "[uri(variables('baseUri'), '../tfs-ha/deployagents.json')]",
   },
   "resources": [
     {
@@ -141,6 +132,64 @@
       "kind": "Storage",
       "properties": {}
     },
+
+
+
+    {
+      "name": "SqlVmDeploy",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('windowsVmTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[concat(variables('SqlVmPrefix'), copyindex())]"
+          },
+          "vmSize": {
+            "value": "[parameters('sqlVmSize')]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          },
+          "fixedPrivateIp": {
+            "value": "[parameters('nodeIpAddresses')[copyIndex()]]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "diagStorageAccountId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+          },
+          "availabilitySetId": {
+            "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
+          },
+          "imagePublisher": {
+            "value": "[parameters('sqlVmImagePublisher')]"
+          },
+          "imageOffer": {
+            "value": "[parameters('sqlVmImageOffer')]"
+          },
+          "imageSku": {
+            "value": "[parameters('sqlVmImageSku')]"
+          },
+          "LoadBalancerBEId": {
+            "value": "[variables('sqlBEAddressPoolID')]"
+          }
+        }
+      }
+    },
+
+
     {
       "name": "[variables('tfsNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
