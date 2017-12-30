@@ -368,7 +368,8 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('tfsVmName'), '/configuretfs')]",
       "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsVmName')), '/extensions/joindomain')]"
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsVmName')), '/extensions/joindomain')]",
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsSqlVmName')), '/extensions/configuresql')]"
       ],
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
