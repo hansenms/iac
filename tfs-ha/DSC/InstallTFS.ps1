@@ -85,6 +85,21 @@ configuration TFSInstallDsc
             Ensure = "Present"
             DependsOn = "[WindowsFeature]ADPS"
         }
+
+        WindowsFeature IISPresent
+        {
+            Ensure = "Present" 
+            Name = "Web-Server"  
+        }
+
+        xWebsite DefaultSite
+        {
+            Ensure          = 'Present'
+            Name            = 'Default Web Site'
+            State           = 'Stopped'
+            PhysicalPath    = 'C:\inetpub\wwwroot'
+            DependsOn       = '[WindowsFeature]IISPresent'
+        }
         
 		xWaitforDisk Disk2
         {
@@ -187,7 +202,7 @@ configuration TFSInstallDsc
                 $sites = Get-WebBinding | Where-Object {$_.bindingInformation -like "*$using:GlobalSiteName*" }
                 -not [String]::IsNullOrEmpty($sites)
             }
-            DependsOn = "[xPendingReboot]PostInstallReboot"
+            DependsOn = "[xPendingReboot]PostInstallReboot","[xWebsite]DefaultSite"
             PsDscRunAsCredential = $DomainCreds
         }
 
