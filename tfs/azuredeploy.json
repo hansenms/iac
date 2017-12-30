@@ -125,7 +125,6 @@
     "SQLServerConfigurationFunction": "TFSSQLServerConfig.ps1\\TFSSQLServerDsc",
     "TFSInstallModuleURL": "[uri(variables('baseUri'), '../tfs-ha/DSC/InstallTFS.ps1.zip')]",
     "TFSInstallFunction": "InstallTFS.ps1\\TFSInstallDsc",
-    "TFSVS2017AgentVmName": "VS2017Agent",
     "agentTemplateUri": "[uri(variables('baseUri'), '../tfs-ha/deployagents.json')]",
     "tfsServerProtocol": "[if(equals(parameters('sslThumbprint'),'generate'),'http://','https://')]",
     "tfsServerUrl": "[concat(variables('tfsServerProtocol'),'tfs.',parameters('domainName'))]"
@@ -300,7 +299,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2017-05-10",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -310,7 +309,7 @@
         },
         "parameters": {
           "vmName": {
-            "value": "[variables('tfsSqlVmName')]"
+            "value": "[variables('tfsVmName')]"
           },
           "vmSize": {
             "value": "[parameters('tfsVmSize')]"
