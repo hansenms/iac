@@ -11,7 +11,7 @@
     },
     "tfsSqlIpAddress": {
       "type": "string",
-      "defaultValue":  "10.0.1.11"
+      "defaultValue": "10.0.1.11"
     },
     "adminUsername": {
       "type": "string",
@@ -101,6 +101,14 @@
         "Standard_DS15_v2"
       ],
       "defaultValue": "Standard_D2_v2"
+    },
+    "secrets": {
+      "type": "array",
+      "defaultValue": []
+    },
+    "sslThumbprint": {
+      "type": "string",
+      "defaultValue": "generate"
     }
   },
   "variables": {
@@ -119,6 +127,8 @@
     "TFSInstallFunction": "InstallTFS.ps1\\TFSInstallDsc",
     "TFSVS2017AgentVmName": "VS2017Agent",
     "agentTemplateUri": "[uri(variables('baseUri'), '../tfs-ha/deployagents.json')]",
+    "tfsServerProtocol": "[if(equals(parameters('sslThumbprint'),'generate'),'http://','https://')]",
+    "tfsServerUrl": "[concat(variables('tfsServerProtocol'),'tfs.',parameters('domainName'))]"
   },
   "resources": [
     {
@@ -132,11 +142,167 @@
       "kind": "Storage",
       "properties": {}
     },
-
-
-
     {
       "name": "SqlVmDeploy",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('windowsVmTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[variables('tfsSqlVmName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('tfsSqlVmSize')]"
+          },
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
+          },
+          "fixedPrivateIp": {
+            "value": "[parameters('tfsSqlIpAddress')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "diagStorageAccountId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+          },
+          "imagePublisher": {
+            "value": "[variables('SQLimagePublisher')]"
+          },
+          "imageOffer": {
+            "value": "[variables('SQLImageOffer')]"
+          },
+          "imageSku": {
+            "value": "[variables('SQLImageSku')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('tfsSqlVmName'), '/SqlIaasExtension')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'SqlVmDeploy')]"
+      ],
+      "properties": {
+        "type": "SqlIaaSAgent",
+        "publisher": "Microsoft.SqlServer.Management",
+        "typeHandlerVersion": "1.2",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "AutoTelemetrySettings": {
+            "Region": "[resourceGroup().location]"
+          },
+          "AutoPatchingSettings": {
+            "PatchCategory": "WindowsMandatoryUpdates",
+            "Enable": true,
+            "DayOfWeek": "Sunday",
+            "MaintenanceWindowStartingHour": "2",
+            "MaintenanceWindowDuration": "60"
+          },
+          "KeyVaultCredentialSettings": {
+            "Enable": false,
+            "CredentialName": ""
+          },
+          "ServerConfigurationsManagementSettings": {
+            "SQLConnectivityUpdateSettings": {
+              "ConnectivityType": "Private",
+              "Port": "1433"
+            },
+            "SQLWorkloadTypeUpdateSettings": {
+              "SQLWorkloadType": "GENERAL"
+            },
+            "SQLStorageUpdateSettings": {
+              "DiskCount": "1",
+              "NumberOfColumns": "1",
+              "StartingDeviceID": "2",
+              "DiskConfigurationType": "NEW"
+            },
+            "AdditionalFeaturesServerConfigurations": {
+              "IsRServicesEnabled": "false"
+            }
+          }
+        },
+        "protectedSettings": {}
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('tfsSqlVmName'), '/joindomain')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsSqlVmName')), '/extensions/SqlIaasExtension')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "Name": "[parameters('domainName')]",
+          "OUPath": "",
+          "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
+          "Restart": "true",
+          "Options": "3"
+        },
+        "protectedSettings": {
+          "Password": "[parameters('adminPassword')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('tfsSqlVmName'), '/configuresql')]",
+      "dependsOn": [
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsSqlVmName')), '/extensions/joindomain')]"
+      ],
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "sqlconfigloop",
+        "count": 2,
+        "mode": "Serial",
+        "batchSize": 1
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesURL": "[variables('SQLConfigModulesURL')]",
+          "configurationFunction": "[variables('SQLServerConfigurationFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "privateSettingsRef:adminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "TFSVmDeploy",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2017-05-10",
       "dependsOn": [
@@ -150,16 +316,13 @@
         },
         "parameters": {
           "vmName": {
-            "value": "[concat(variables('SqlVmPrefix'), copyindex())]"
+            "value": "[variables('tfsSqlVmName')]"
           },
           "vmSize": {
-            "value": "[parameters('sqlVmSize')]"
+            "value": "[parameters('tfsVmSize')]"
           },
           "subnetId": {
             "value": "[parameters('subnetId')]"
-          },
-          "fixedPrivateIp": {
-            "value": "[parameters('nodeIpAddresses')[copyIndex()]]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -167,98 +330,17 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
+          "fixedPrivateIp": {
+            "value": "[parameters('tfsIpAddress')]"
+          },
           "diagStorageAccountId": {
             "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
           },
-          "availabilitySetId": {
-            "value": "[resourceId('Microsoft.Compute/availabilitySets', variables('HASetName'))]"
-          },
-          "imagePublisher": {
-            "value": "[parameters('sqlVmImagePublisher')]"
-          },
-          "imageOffer": {
-            "value": "[parameters('sqlVmImageOffer')]"
-          },
           "imageSku": {
-            "value": "[parameters('sqlVmImageSku')]"
+            "value": "[variables('windowsOSVersion')]"
           },
-          "LoadBalancerBEId": {
-            "value": "[variables('sqlBEAddressPoolID')]"
-          }
-        }
-      }
-    },
-
-
-    {
-      "name": "[variables('tfsNicName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
-      "tags": {
-        "displayName": "tfsNIC"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "subnet": {
-                "id": "[parameters('subnetId')]"
-              },
-              "privateIPAddress": "[parameters('tfsIpAddress')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2017-03-30",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('tfsVmName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('tfsNICName'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('tfsVmSize')]"
-        },
-        "osProfile": {
-          "computerName": "[variables('tfsVmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "[variables('windowsOSVersion')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "diskSizeGB": 1023,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('tfsNicName'))]"
-            }
-          ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
+          "secrets": {
+            "value": "[parameters('secrets')]"
           }
         }
       }
@@ -266,10 +348,10 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('tfsVmName'),'/joindomain')]",
+      "name": "[concat(variables('tfsVmName'), '/joindomain')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('tfsVmName'))]"
+        "[resourceId('Microsoft.Resources/deployments', 'TFSVmDeploy')]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -289,126 +371,34 @@
       }
     },
     {
-      "name": "[variables('tfsSqlNICName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
-      "tags": {
-        "displayName": "tfsNIC"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "static",
-              "subnet": {
-                "id": "[parameters('subnetId')]"
-              },
-              "privateIPAddress": "[parameters('tfsSqlIpAddress')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2017-03-30",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('tfsSqlVmName')]",
-      "location": "[resourceGroup().location]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('tfsVmName'), '/configuretfs')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/',variables('tfsSqlNICName'))]"
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsVmName')), '/extensions/joindomain')]"
       ],
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('tfsSqlVmSize')]"
-        },
-        "osProfile": {
-          "computerName": "[concat(variables('tfsSqlVmName'))]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('SQLimagePublisher')]",
-            "offer": "[variables('SQLimageOffer')]",
-            "sku": "[variables('SQLimageSku')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('tfsSqlNicName'))]"
-            }
-          ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": "true",
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
-          }
-        }
-      },
-      "resources": [
-        {
-          "name": "ConfigureSqlServer",
-          "type": "extensions",
-          "apiVersion": "2016-03-30",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('tfsSqlVmName'))]"
-          ],
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesURL": "[variables('TFSInstallModuleURL')]",
+          "configurationFunction": "[variables('TFSInstallFunction')]",
           "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.19",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "ModulesUrl": "[variables('SQLConfigModulesURL')]",
-              "ConfigurationFunction": "[variables('SQLServerConfigurationFunction')]",
-              "Properties": {
-                "DomainName": "[parameters('domainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUserName')]",
-                  "Password": "PrivateSettingsRef:AdminPassword"
-                }
-              }
+            "domainName": "[parameters('domainName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "privateSettingsRef:adminPassword"
             },
-            "protectedSettings": {
-              "Items": {
-                "AdminPassword": "[parameters('adminPassword')]"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('tfsVmName'),'/InstallTFS')]",
-      "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsSqlVmName')), '/extensions/ConfigureSqlServer')]"
-      ],
-      "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "modulesURL": "[variables('TFSConfigModulesURL')]",
-          "configurationFunction": "[variables('TFSConfigurationFunction')]",
-          "properties": {
-            "domainName": "[parameters('domainName')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUserName')]",
-              "password": "privateSettingsRef:adminPassword"
-            }
+            "SqlServerInstance": "[variables('tfsSqlVmName')]",
+            "primaryInstance": "[variables('tfsVmName')]",
+            "GlobalSiteIP": "[parameters('tfsIpAddress')]",
+            "GlobalSiteName": "TFS",
+            "DnsServer": "DC1",
+            "TFSVersion": "TFS2018",
+            "SslThumbprint": "[parameters('sslThumbprint')]"
           }
         },
         "protectedSettings": {
@@ -419,122 +409,36 @@
       }
     },
     {
-      "name": "[variables('TFSVS2017AgentNicName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
-      "tags": {
-        "displayName": "[variables('TFSVS2017AgentNicName')]"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "dynamic",
-              "subnet": {
-                "id": "[parameters('subnetId')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2017-03-30",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('TFSVS2017AgentVmName')]",
-      "location": "[resourceGroup().location]",
+      "name": "tfsagents",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('TFSVS2017AgentNicName'))]"
+        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsVmName')), '/extensions/configuretfs')]"
       ],
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('tfsAgentVmSize')]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('agentTemplateUri')]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computerName": "[variables('TFSVS2017AgentVmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('VSImagePublisher')]",
-            "offer": "[variables('VSImageOffer')]",
-            "sku": "[variables('VSImageSku')]",
-            "version": "latest"
+        "parameters": {
+          "subnetId": {
+            "value": "[parameters('subnetId')]"
           },
-          "osDisk": {
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('TFSVS2017AgentNicName'))]"
-            }
-          ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('TFSVS2017AgentVmName'),'/joindomain')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('TFSVS2017AgentVmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "JsonADDomainExtension",
-        "typeHandlerVersion": "1.3",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "Name": "[parameters('domainName')]",
-          "OUPath": "",
-          "User": "[concat(parameters('domainName'), '\\', parameters('adminUserName'))]",
-          "Restart": "true",
-          "Options": "3"
-        },
-        "protectedSettings": {
-          "Password": "[parameters('adminPassword')]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('TFSVS2017AgentVmName'),'/InstallVSTSAgent')]",
-      "dependsOn": [
-        "[concat(resourceId('Microsoft.Compute/virtualMachines', variables('tfsVmName')), '/extensions/InstallTFS')]"
-      ],
-      "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "modulesURL": "[variables('VSTSAgentConfigModulesURL')]",
-          "configurationFunction": "[variables('VSTSAgentConfigurationFunction')]",
-          "properties": {
-            "domainName": "[parameters('domainName')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUserName')]",
-              "password": "privateSettingsRef:adminPassword"
-            }
-          }
-        },
-        "protectedSettings": {
-          "items": {
-            "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('tfsAgentVmSize')]"
+          },
+          "tfsServerUrl": {
+            "value": "[variables('tfsServerUrl')]"
           }
         }
       }

@@ -112,7 +112,7 @@
         "corevnetDevOpsSubnetName": "Subnet-2",
         "vnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
         "devopsdubnetid": "[concat(variables('vnetid'), '/subnets/', variables('corevnetDevOpsSubnetName'))]",
-        "tfsServerProtocol": "[if(empty(parameters('sslThumbprint')),'http://','https://')]",
+        "tfsServerProtocol": "[if(equals(parameters('sslThumbprint'),'generate'),'http://','https://')]",
         "tfsServerUrl": "[concat(variables('tfsServerProtocol'),'tfs.',parameters('domainName'))]"
     },
     "resources": [

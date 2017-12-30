@@ -16,16 +16,6 @@
     "jumpBoxVmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_D11_v2",
-        "Standard_D12_v2",
-        "Standard_D13_v2",
-        "Standard_D14_v2",
-        "Standard_D15_v2",
         "Standard_DS1_v2",
         "Standard_DS2_v2",
         "Standard_DS3_v2",
@@ -37,21 +27,11 @@
         "Standard_DS14_v2",
         "Standard_DS15_v2"
       ],
-      "defaultValue": "Standard_D2_v2"
+      "defaultValue": "Standard_DS2_v2"
     },
     "DCVmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_D11_v2",
-        "Standard_D12_v2",
-        "Standard_D13_v2",
-        "Standard_D14_v2",
-        "Standard_D15_v2",
         "Standard_DS1_v2",
         "Standard_DS2_v2",
         "Standard_DS3_v2",
@@ -63,21 +43,11 @@
         "Standard_DS14_v2",
         "Standard_DS15_v2"
       ],
-      "defaultValue": "Standard_D1_v2"
+      "defaultValue": "Standard_DS1_v2"
     },
     "tfsVmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_D11_v2",
-        "Standard_D12_v2",
-        "Standard_D13_v2",
-        "Standard_D14_v2",
-        "Standard_D15_v2",
         "Standard_DS1_v2",
         "Standard_DS2_v2",
         "Standard_DS3_v2",
@@ -89,21 +59,11 @@
         "Standard_DS14_v2",
         "Standard_DS15_v2"
       ],
-      "defaultValue": "Standard_D2_v2"
+      "defaultValue": "Standard_DS2_v2"
     },
     "tfsSqlVmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_D11_v2",
-        "Standard_D12_v2",
-        "Standard_D13_v2",
-        "Standard_D14_v2",
-        "Standard_D15_v2",
         "Standard_DS1_v2",
         "Standard_DS2_v2",
         "Standard_DS3_v2",
@@ -115,21 +75,11 @@
         "Standard_DS14_v2",
         "Standard_DS15_v2"
       ],
-      "defaultValue": "Standard_D4_v2"
+      "defaultValue": "Standard_DS4_v2"
     },
     "tfsAgentVmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_D11_v2",
-        "Standard_D12_v2",
-        "Standard_D13_v2",
-        "Standard_D14_v2",
-        "Standard_D15_v2",
         "Standard_DS1_v2",
         "Standard_DS2_v2",
         "Standard_DS3_v2",
@@ -141,16 +91,13 @@
         "Standard_DS14_v2",
         "Standard_DS15_v2"
       ],
-      "defaultValue": "Standard_D2_v2"
-    },
-    "artifactBaseUrl": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/hansenms/iac/master/"
+      "defaultValue": "Standard_DS2_v2"
     }
   },
   "variables": {
-    "coreNetworkTemplateUri": "[concat(parameters('artifactBaseUrl'),'/core-network/azuredeploy.json')]",
-    "tfsTemplateUri": "[concat(parameters('artifactBaseUrl'),'/tfs/azuredeploy.json')]",
+    "baseUri": "[deployment().properties.templateLink.uri]",
+    "coreNetworkTemplateUri": "[uri(variables('baseUri'), '../core-network/azuredeploy.json')]",
+    "tfsTemplateUri": "[uri(variables('baseUri'), '../tfs/azuredeploy.json')]",
     "coreVnetName": "corevnet",
     "corevnetDevOpsSubnetName": "Subnet-2",
     "vnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('coreVnetName'))]",
@@ -182,9 +129,6 @@
           },
           "DCVmSize": {
             "value": "[parameters('DCVmSize')]"
-          },
-          "artifactBaseUrl": {
-            "value": "[parameters('artifactBaseUrl')]"
           }
         }
       }
@@ -223,9 +167,6 @@
           },
           "tfsAgentVmSize": {
             "value": "[parameters('tfsAgentVmSize')]"
-          },
-          "artifactBaseUrl": {
-            "value": "[parameters('artifactBaseUrl')]"
           }
         }
       }
