@@ -3,7 +3,7 @@ High Availability Team Foundation Server in Azure
 
 This solution combined several other templates to deploy a high-availability [Team Foundation Server](https://www.visualstudio.com/tfs/) (TFS) in Azure. This solution is relevant for organizations where the SaaS [Vistual Studio Team Services](https://www.visualstudio.com/team-services/) (VSTS) is not an option. The deployed solution is outlined in the diagram below.
 
-![private-ha-devops]
+![private-ha-devops](private-ha-devops.png)
 
 The components included are:
 
