@@ -1,6 +1,5 @@
 [CmdletBinding(DefaultParameterSetName="nossl")]
 param(
-    # Domain Name
     [Parameter(Mandatory)]
     [String]$DomainName,
 
@@ -23,8 +22,20 @@ param(
     [SecureString]$CertificatePassword,
 
     [Parameter(Mandatory)]
-    [String]$Location
+    [String]$Location,
+
+    [Parameter(Mandatory=$false)]
+    [String]$OutFile = ".\azuredeploy.parameters.json"
 )
+
+if (Test-Path $OutFile) {
+    throw "Output file already exists. Please delete or rename"
+}
+
+#Check if the user is administrator
+if (-not [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")) {
+    throw "You must have administrator priveleges to run this script."
+}
 
 $azcontext = Get-AzureRmContext
 if ([string]::IsNullOrEmpty($azcontext.Account)) {
@@ -41,22 +52,26 @@ $kv = New-AzureRmKeyVault -VaultName $KeyVaultName -Location $kvrg.Location -Res
 Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -EnabledForDiskEncryption -EnabledForDeployment -EnabledForTemplateDeployment
 
 #Store domain password in keyvault. 
-Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $DomainAdminPasswordSecretName -SecretValue $AdminPassword
+$passwdsecret = Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $DomainAdminPasswordSecretName -SecretValue $AdminPassword
 
-#Upload SSL cert to keyvault
-$cer = Import-AzureKeyVaultCertificate -VaultName $KeyVaultName -Name $SslCertificateSecretName -FilePath $CertificatePath -Password $CertificatePassword
-
-$secret = @{
-    "sourceVault" = @{
-        "id" = $kv.ResourceId
-    }
-    "vaultCertificates" = @(
-        @{
-            "certificateUrl" = $cer.SecretId
-            "certificateStore" = "My"
+$secrets = @()
+if (-not [String]::IsNullOrEmpty($CertificatePath)) { 
+    #Upload SSL cert to keyvault
+    $cer = Import-AzureKeyVaultCertificate -VaultName $KeyVaultName -Name $SslCertificateSecretName -FilePath $CertificatePath -Password $CertificatePassword
+    $secret = @{
+        "sourceVault" = @{
+            "id" = $kv.ResourceId
         }
-    )
+        "vaultCertificates" = @(
+            @{
+                "certificateUrl" = $cer.SecretId
+                "certificateStore" = "My"
+            }
+        )
+    }
+    $secrets = @( $secret )
 }
+
 
 $templateParameters = @{
 
@@ -78,7 +93,7 @@ $templateParameters = @{
     }
 
     "secrets" = @{
-        "value" = @( $secret )
+        "value" = $secret
     }
 
     "sslThumbPrint" = @{
@@ -86,4 +101,6 @@ $templateParameters = @{
     }
 }
 
-return $templateParameters
+$templateParameters | ConvertTo-Json -Depth 10 | Out-File $OutFile
+
+Write-Host "Parameters written to $OutFile."
