@@ -91,14 +91,11 @@ $templateParameters = @{
             "secretName" = $DomainAdminPasswordSecretName
         }
     }
+}
 
-    "secrets" = @{
-        "value" = $secret
-    }
-
-    "sslThumbPrint" = @{
-        "value" = $cer.Thumbprint
-    }
+if (-not [String]::IsNullOrEmpty($CertificatePath)) {
+    $templateParameters.Add("secrets", @{ "value" = $secrets})
+    $templateParameters.Add("sslThumbprint", @{ "value" = $cer.Thumbprint})
 }
 
 $templateParameters | ConvertTo-Json -Depth 10 | Out-File $OutFile
