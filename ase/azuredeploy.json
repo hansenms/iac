@@ -1,0 +1,55 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "parameters": {
+        "vnetId": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "aseName": {
+            "type": "string",
+            "defaultValue": "ASE"
+        },
+        "domainName": {
+            "type": "string",
+            "defaultValue": "contoso-internal.us"
+        },
+        "internalLoadBalancingMode": {
+            "type": "int",
+            "defaultValue": 3,
+            "allowedValues": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "metadata": {
+                "description": "0 = public VIP only, 1 = only ports 80/443 are mapped to ILB VIP, 2 = only FTP ports are mapped to ILB VIP, 3 = both ports 80/443 and FTP ports are mapped to an ILB VIP."
+            }
+        }
+    },
+    "variables": {
+        
+    },
+    "resources": [
+        {
+            "name": "[parameters('aseName')]",
+            "type": "Microsoft.Web/hostingEnvironments",
+            "apiVersion": "2016-09-01",
+            "kind": "ASEV2",
+            "location": "[resourceGroup().location]",
+            "properties": {
+              "name": "[parameters('aseName')]",
+              "location": "[resourceGroup().location]",
+              "virtualNetwork": {
+                "id": "[parameters('vnetId')]",
+                "subnet": "[parameters('subnetName')]"
+              },
+              "ipSslAddressCount": 0,
+              "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
+              "dnsSuffix": "[parameters('domainName')]"
+            }
+        }
+    ]
+}
