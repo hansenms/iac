@@ -28,6 +28,10 @@
             "metadata": {
                 "description": "0 = public VIP only, 1 = only ports 80/443 are mapped to ILB VIP, 2 = only FTP ports are mapped to ILB VIP, 3 = both ports 80/443 and FTP ports are mapped to an ILB VIP."
             }
+        },
+        "aseLocation": {
+            "type": "string",
+            "defaultValue": "East US"
         }
     },
     "variables": {
@@ -39,10 +43,10 @@
             "type": "Microsoft.Web/hostingEnvironments",
             "apiVersion": "2016-09-01",
             "kind": "ASEV2",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('aseLocation')]",
             "properties": {
               "name": "[parameters('aseName')]",
-              "location": "[resourceGroup().location]",
+              "location": "[parameters('aseLocation')]",
               "virtualNetwork": {
                 "id": "[parameters('vnetId')]",
                 "subnet": "[parameters('subnetName')]"
