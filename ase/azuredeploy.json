@@ -95,7 +95,7 @@
                     {
                         "name": "[variables('genVnetSubnetName2')]",
                         "properties" : {
-                            "addressPrefix": "10.1.0.0/25"
+                            "addressPrefix": "10.1.0.0/24"
                         }
                     }
 
