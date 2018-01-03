@@ -204,7 +204,7 @@
             "type": "Microsoft.Web/sites",
             "location": "[variables('locationLUT')[resourceGroup().location]]",
             "dependsOn": [
-                "[concat('Microsoft.Web/serverFarms/', variables('aseName'))]"
+                "[concat('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
             ],
             "properties": {
                 "name": "[parameters('aseSiteName')]",
