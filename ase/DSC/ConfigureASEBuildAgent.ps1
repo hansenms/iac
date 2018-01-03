@@ -24,6 +24,7 @@ configuration ConfigureASEBuildAgentDsc
     Import-DscResource -ModuleName xNetworking, 'PSDesiredStateConfiguration'
 
     $tmp = $AppDns.Split('.')
+    $OFS='.'
     $AppScmDns = $tmp[0] + ".scm." + [String]$tmp[1..$tmp.Count]
 	
     Node localhost
