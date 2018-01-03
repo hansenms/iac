@@ -110,10 +110,10 @@
                 "[variables('vnetId')]"
             ],
             "kind": "ASEV2",
-            "location": "[variables('locationLUT')[reference(variables('vnetId'),'2016-03-30').Id]]",
+            "location": "[variables('locationLUT')[resourceGroup().location]]",
             "properties": {
               "name": "[variables('aseName')]",
-              "location": "[variables('locationLUT')[reference(variables('vnetId'),'2016-03-30').Id]]",
+              "location": "[variables('locationLUT')[resourceGroup().location]]",
               "virtualNetwork": {
                 "id": "[variables('vnetId')]",
                 "subnet": "[variables('subnetName')]"
