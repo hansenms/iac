@@ -36,7 +36,7 @@ $templateParameters = @{
         "value" = $pfxBlobString
     }
     "certificatePassword" = @{
-        "value" = $CertificatePassword
+        "value" = (New-Object PSCredential "user", $CertificatePassword).GetNetworkCredential().Password
     }
     "certificateThumbprint" = @{
         "value" = $certificate.Thumbprint

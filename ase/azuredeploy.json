@@ -145,13 +145,13 @@
             "name": "[variables('certName')]",
             "location": "[variables('locationLUT')[resourceGroup().location]]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/hostingEnvironments', variables('certName'))]"
+                "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
             ],
             "properties": {
                 "pfxBlob": "[parameters('pfxBlobString')]",
                 "password": "[parameters('certificatePassword')]",
                 "hostingEnvironmentProfile": {
-                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('certName'))]"
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
                 }
             }
         }
