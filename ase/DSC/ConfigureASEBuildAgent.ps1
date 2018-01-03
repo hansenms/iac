@@ -97,7 +97,7 @@ configuration ConfigureASEBuildAgentDsc
             Ensure    = 'Present'
         }
 
-        xHostsFile HostEntry
+        xHostsFile HostScmEntry
         {
             HostName  = $AppScmDns
             IPAddress = $AseIp
