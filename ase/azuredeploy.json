@@ -31,6 +31,29 @@
         },
         "certificateThumbprint": {
             "type": "string"
+        },
+        "aseSiteName": {
+            "type": "string",
+            "defaultValue": "ase-site"
+        },
+        "pricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "1",
+                "2",
+                "3"
+            ],
+            "defaultValue": "1",
+            "metadata": {
+                "description": "Defines pricing tier for workers: 1 = Isolated 1, 2 = Isolated 2, 3 = Isolated 3."
+            }
+        },
+        "capacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Defines the number of instances that will be allocated to the app service plan."
+            }
         }
     },
     "variables": {
@@ -46,6 +69,7 @@
         "subnetName": "[substring(variables('subnetId'),add(variables('lastSlash'),1))]",
         "vnetId": "[substring(variables('subnetId'),0,sub(variables('lastSlash'),8))]",
         "certName": "[concat(variables('aseName'),'-cert')]",
+        "appServicePlanName": "[concat(variables('aseName'),'-asp')]",
         "locationLUT": {
             "usgovvirginia": "USGov Virginia",
             "usgoviowa": "USGov Iowa",
@@ -150,6 +174,41 @@
             "properties": {
                 "pfxBlob": "[parameters('pfxBlobString')]",
                 "password": "[parameters('certificatePassword')]",
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "name": "[variables('appServicePlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "properties": {
+                "name": "[variables('appServicePlanName')]",
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                }
+            },
+            "sku": {
+                "name": "[concat('I',parameters('pricingTier'))]",
+                "tier": "Isolated",
+                "size": "[concat('I',parameters('pricingTier'))]",
+                "family": "I",
+                "capacity": "[parameters('capacity')]"
+            }
+        },
+        {
+            "apiVersion": "2016-08-01",
+            "name": "[parameters('aseSiteName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverFarms/', variables('aseName'))]"
+            ],
+            "properties": {
+                "name": "[parameters('aseSiteName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms', variables('appServicePlanName'))]",
                 "hostingEnvironmentProfile": {
                     "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
                 }
