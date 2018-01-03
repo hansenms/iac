@@ -184,6 +184,9 @@
             "name": "[variables('appServicePlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+            ],
             "properties": {
                 "name": "[variables('appServicePlanName')]",
                 "hostingEnvironmentProfile": {
