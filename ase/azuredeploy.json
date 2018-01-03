@@ -58,7 +58,7 @@
     },
     "variables": {
         "aseName": "[concat('ASE-', uniqueString(resourceGroup().id))]",
-        "genVnetName": "ase-vnet",
+        "genVnetName": "[concat('ase-vnet',uniqueString(resourceGroup().id))]",
         "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
         "genVnetSubnetName1": "default",
         "genVnetSubnetName2": "ase-subnet",
