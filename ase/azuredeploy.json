@@ -2,15 +2,9 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "vnetId": {
-            "type": "string"
-        },
-        "subnetName": {
-            "type": "string"
-        },
-        "aseName": {
+        "subnetId": {
             "type": "string",
-            "defaultValue": "ASE"
+            "defaultValue": "null"
         },
         "domainName": {
             "type": "string",
@@ -31,6 +25,17 @@
         }
     },
     "variables": {
+        "aseName": "[concat('ASE-', uniqueString(resourceGroup().id))]",
+        "genVnetName": "ase-vnet",
+        "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
+        "genVnetSubnetName1": "default",
+        "genVnetSubnetName2": "ase-subnet",
+        "genSubnetId1": "[concat(variables('genVnetid'), '/subnets/', variables('genVnetSubnetName1'))]",
+        "genSubnetId2": "[concat(variables('genVnetid'), '/subnets/', variables('genVnetSubnetName2'))]",
+        "subnetId": "[if(equals(parameters('subnetId'),'null'), variables('genSubnetId2'), parameters('subnetId'))]",
+        "lastSlash": "[lastIndexOf(variables('subnetId'),'/')]",
+        "subnetName": "[substring(variables('subnetId'),add(variables('lastSlash'),1))]",
+        "vnetId": "[substring(variables('subnetId'),0,sub(variables('lastSlash'),8))]",
         "locationLUT": {
             "usgovvirginia": "USGov Virginia",
             "usgoviowa": "USGov Iowa",
@@ -68,17 +73,50 @@
     },
     "resources": [
         {
-            "name": "[parameters('aseName')]",
+            "name": "[variables('genVnetName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
+            "condition": "[equals(parameters('subnetId'),'null')]",
+            "dependsOn": [],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('genVnetSubnetName1')]",
+                        "properties" : {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    },
+                    {
+                        "name": "[variables('genVnetSubnetName2')]",
+                        "properties" : {
+                            "addressPrefix": "10.1.0.0/25"
+                        }
+                    }
+
+                ]
+            }
+        },
+        {
+            "name": "[variables('aseName')]",
             "type": "Microsoft.Web/hostingEnvironments",
             "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[variables('vnetId')]"
+            ],
             "kind": "ASEV2",
-            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "location": "[variables('locationLUT')[reference(variables('vnetId'),'2016-03-30').Id]]",
             "properties": {
-              "name": "[parameters('aseName')]",
-              "location": "[variables('locationLUT')[resourceGroup().location]]",
+              "name": "[variables('aseName')]",
+              "location": "[variables('locationLUT')[reference(variables('vnetId'),'2016-03-30').Id]]",
               "virtualNetwork": {
-                "id": "[parameters('vnetId')]",
-                "subnet": "[parameters('subnetName')]"
+                "id": "[variables('vnetId')]",
+                "subnet": "[variables('subnetName')]"
               },
               "ipSslAddressCount": 0,
               "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
