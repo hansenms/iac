@@ -1,7 +1,7 @@
 VSTS Build Agent in Private Virtual Network for ASE
 ---------------------------------------------------
 
-The Azure [App Service Environment (ASE)](https://docs.microsoft.com/en-us/azure/app-service/environment/intro) allows you to deploy Azure Web Apps into a private environment for enhanced security and access control. One challenge with this configuration is how to orchestrate Continious Integration and Continuous Deploymend (CI/CD) with [Visual Studio Team Services](https://www.visualstudio.com/team-services/) or [Team Foundation Server](https://www.visualstudio.com/tfs/) into such environents. 
+The Azure [App Service Environment (ASE)](https://docs.microsoft.com/en-us/azure/app-service/environment/intro) allows you to deploy Azure Web Apps into a private environment for enhanced security and access control. One challenge with this configuration is how to orchestrate Continious Integration and Continuous Deployment (CI/CD) with [Visual Studio Team Services](https://www.visualstudio.com/team-services/) or [Team Foundation Server](https://www.visualstudio.com/tfs/) into such environments. 
 
 This template deploys a VSTS/TFS build agent into the Virtual Network where the ASE is deployed and connects this agent to a VSTS or TFS instance. It also adds appropriate `hosts` file entries to the agent to allow it to deploy to a specific Web App in an ASE. 
 

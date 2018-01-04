@@ -1,7 +1,7 @@
 DevOps Enabled App Service Environment
 --------------------------------------
 
-The Azure [App Service Environment (ASE)](https://docs.microsoft.com/en-us/azure/app-service/environment/intro) allows you to deploy Azure Web Apps into a private environment for enhanced security and access control. One challenge with this configuration is how to orchestrate Continious Integration and Continuous Deploymend (CI/CD) with [Visual Studio Team Services](https://www.visualstudio.com/team-services/) or [Team Foundation Server](https://www.visualstudio.com/tfs/) into such environents. 
+The Azure [App Service Environment (ASE)](https://docs.microsoft.com/en-us/azure/app-service/environment/intro) allows you to deploy Azure Web Apps into a private environment for enhanced security and access control. One challenge with this configuration is how to orchestrate Continious Integration and Continuous Deployment (CI/CD) with [Visual Studio Team Services](https://www.visualstudio.com/team-services/) or [Team Foundation Server](https://www.visualstudio.com/tfs/) into such environments. 
 
 The pattern in this template deployment illustrates how to combine ASE with CI/CD using VSTS or TFS. It uses the [ase](../ase) template to establish an App Service Environment with a Web App. It also uses the [ase-agent](../ase-agent) template to deploy a VSTS/TFS agent in the Virtual Network and connect this agent with a VSTS or TFS instance. Finally, a jump-box is also deploy in this case to allow access to the Virtual Network for testing purposes. 
 
