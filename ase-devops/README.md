@@ -3,13 +3,13 @@ DevOps Enabled App Service Environment
 
 The Azure [App Service Environment (ASE)](https://docs.microsoft.com/en-us/azure/app-service/environment/intro) allows you to deploy Azure Web Apps into a private environment for enhanced security and access control. One challenge with this configuration is how to orchestrate Continious Integration and Continuous Deploymend (CI/CD) with [Visual Studio Team Services](https://www.visualstudio.com/team-services/) or [Team Foundation Server](https://www.visualstudio.com/tfs/) into such environents. 
 
-The pattern in this template deployment illustrates how to combined ASE with CI/CD using VSTS or TFS. It uses the [ase](../ase) template to establish an App Service Environment with a Web App. It also uses the [ase-agent](../ase-agent) template to deploy a VSTS/TFS agent in the Virtual Network and connect this agent with a VSTS or TFS instance. Finally, a jump-box is also deploy in this case to allow access to the Virtual Network for testing purposes. 
+The pattern in this template deployment illustrates how to combine ASE with CI/CD using VSTS or TFS. It uses the [ase](../ase) template to establish an App Service Environment with a Web App. It also uses the [ase-agent](../ase-agent) template to deploy a VSTS/TFS agent in the Virtual Network and connect this agent with a VSTS or TFS instance. Finally, a jump-box is also deploy in this case to allow access to the Virtual Network for testing purposes. 
 
 The final deployment looks like this:
 
 ![ase-devops](ase_devops.png)
 
-A number of parameters (including SSL certificate) are needed for proper deployment of this pattern. To assist with preparing these parameters, there is a [convenience script](../PrepareAseDeployment.ps1). You need an SSL certificate to support the DNS names *.domainname and *.scm.domainname, if you don't have one, the script with create a self-signed certificate for you. You can call the script with:
+A number of parameters (including SSL certificate) are needed for proper deployment of this pattern. To assist with preparing these parameters, there is a [convenience script](../PrepareAseDeployment.ps1). You need an SSL certificate to support the DNS names `*.domainname` and `*.scm.domainname`, if you don't have one, the script with create a self-signed certificate for you. You can call the script with:
 
 ```
 .\scripts\PrepareAseDeployment.ps1 -DomainName mydomain-internal.us `
@@ -31,5 +31,3 @@ Please note that ASE is not yet available in Azure Government, hence to Deploy t
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
 </a>
 -->
-
-
