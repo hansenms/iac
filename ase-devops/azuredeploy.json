@@ -217,13 +217,13 @@
                         "value": "[parameters('siteName')]"
                     },
                     "pfxBlobString": {
-                        "type": "[parameters('pfxBlobString')]"
+                        "value": "[parameters('pfxBlobString')]"
                     },
                     "certificatePassword": {
-                        "type": "[parameters('certificatePassword')]"
+                        "value": "[parameters('certificatePassword')]"
                     },
                     "certificateThumbprint": {
-                        "type": "[parameters('certificateThumbprint')]"
+                        "value": "[parameters('certificateThumbprint')]"
                     }
                 }
             }
