@@ -1,0 +1,221 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subnetId": {
+            "type": "string",
+            "defaultValue": "null"
+        },
+        "domainName": {
+            "type": "string",
+            "defaultValue": "contoso-internal.us"
+        },
+        "internalLoadBalancingMode": {
+            "type": "int",
+            "defaultValue": 3,
+            "allowedValues": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "metadata": {
+                "description": "0 = public VIP only, 1 = only ports 80/443 are mapped to ILB VIP, 2 = only FTP ports are mapped to ILB VIP, 3 = both ports 80/443 and FTP ports are mapped to an ILB VIP."
+            }
+        },
+        "pfxBlobString": {
+            "type": "string"
+        },
+        "certificatePassword": {
+            "type": "securestring"
+        },
+        "certificateThumbprint": {
+            "type": "string"
+        },
+        "aseSiteName": {
+            "type": "string",
+            "defaultValue": "ase-site"
+        },
+        "pricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "1",
+                "2",
+                "3"
+            ],
+            "defaultValue": "1",
+            "metadata": {
+                "description": "Defines pricing tier for workers: 1 = Isolated 1, 2 = Isolated 2, 3 = Isolated 3."
+            }
+        },
+        "capacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Defines the number of instances that will be allocated to the app service plan."
+            }
+        }
+    },
+    "variables": {
+        "aseName": "[concat('ASE-', uniqueString(resourceGroup().id))]",
+        "genVnetName": "[concat('ase-vnet',uniqueString(resourceGroup().id))]",
+        "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
+        "genVnetSubnetName1": "default",
+        "genVnetSubnetName2": "ase-subnet",
+        "genSubnetId1": "[concat(variables('genVnetid'), '/subnets/', variables('genVnetSubnetName1'))]",
+        "genSubnetId2": "[concat(variables('genVnetid'), '/subnets/', variables('genVnetSubnetName2'))]",
+        "subnetId": "[if(equals(parameters('subnetId'),'null'), variables('genSubnetId2'), parameters('subnetId'))]",
+        "lastSlash": "[lastIndexOf(variables('subnetId'),'/')]",
+        "subnetName": "[substring(variables('subnetId'),add(variables('lastSlash'),1))]",
+        "vnetId": "[substring(variables('subnetId'),0,sub(variables('lastSlash'),8))]",
+        "certName": "[concat(variables('aseName'),'-cert')]",
+        "appServicePlanName": "[concat(variables('aseName'),'-asp')]",
+        "locationLUT": {
+            "usgovvirginia": "USGov Virginia",
+            "usgoviowa": "USGov Iowa",
+            "usdodeast": "USDoD East",
+            "usdodcentral": "USDoD Central",
+            "usgovtexas": "USGov Texas",
+            "usgovarizona": "USGov Arizona",
+            "eastasia": "East Asia",
+            "southeastasia": "Southeast Asia",
+            "centralus": "Central US",
+            "eastus": "East US",
+            "eastus2": "East US 2",
+            "westus": "West US",
+            "northcentralus": "North Central US",
+            "southcentralus": "South Central US",
+            "northeurope": "North Europe",
+            "westeurope": "West Europe",
+            "japanwest": "Japan West",
+            "japaneast": "Japan East",
+            "brazilsouth": "Brazil South",
+            "australiaeast": "Australia East",
+            "australiasoutheast": "Australia Southeast",
+            "southindia": "South India",
+            "centralindia": "Central India",
+            "westindia": "West India",
+            "canadacentral": "Canada Central",
+            "canadaeast": "Canada East",
+            "uksouth": "UK South",
+            "ukwest": "UK West",
+            "westcentralus": "West Central US",
+            "westus2": "West US 2",
+            "koreacentral": "Korea Central",
+            "koreasouth": "Korea South"
+        }
+    },
+    "resources": [
+        {
+            "name": "[variables('genVnetName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
+            "condition": "[equals(parameters('subnetId'),'null')]",
+            "dependsOn": [],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('genVnetSubnetName1')]",
+                        "properties" : {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    },
+                    {
+                        "name": "[variables('genVnetSubnetName2')]",
+                        "properties" : {
+                            "addressPrefix": "10.0.1.0/25"
+                        }
+                    }
+
+                ]
+            }
+        },
+        {
+            "name": "[variables('aseName')]",
+            "type": "Microsoft.Web/hostingEnvironments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[variables('genVnetId')]"
+            ],
+            "kind": "ASEV2",
+            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "properties": {
+              "name": "[variables('aseName')]",
+              "location": "[variables('locationLUT')[resourceGroup().location]]",
+              "virtualNetwork": {
+                "id": "[variables('vnetId')]",
+                "subnet": "[variables('subnetName')]"
+              },
+              "ipSslAddressCount": 0,
+              "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
+              "dnsSuffix": "[parameters('domainName')]",
+              "clusterSettings": [
+                    {
+                        "name": "DefaultSslCertificateThumbprint",
+                        "value": "[parameters('certificateThumbprint')]"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2016-03-01",
+            "type": "Microsoft.Web/certificates",
+            "name": "[variables('certName')]",
+            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+            ],
+            "properties": {
+                "pfxBlob": "[parameters('pfxBlobString')]",
+                "password": "[parameters('certificatePassword')]",
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "name": "[variables('appServicePlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+            ],
+            "properties": {
+                "name": "[variables('appServicePlanName')]",
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                }
+            },
+            "sku": {
+                "name": "[concat('I',parameters('pricingTier'))]",
+                "tier": "Isolated",
+                "size": "[concat('I',parameters('pricingTier'))]",
+                "family": "I",
+                "capacity": "[parameters('capacity')]"
+            }
+        },
+        {
+            "apiVersion": "2016-08-01",
+            "name": "[parameters('aseSiteName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
+            ],
+            "properties": {
+                "name": "[parameters('aseSiteName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms', variables('appServicePlanName'))]",
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                }
+            }
+        }
+    ]
+}

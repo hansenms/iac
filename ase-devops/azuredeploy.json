@@ -1,0 +1,233 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "jumpvmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        },
+        "agentVmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "EnterpriseAdmin"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "domainName": {
+            "type": "string",
+            "defaultValue": "contoso-internal.us"
+        },
+        "siteName": {
+            "type": "string",
+            "defaultValue": "ase-site"
+        },
+        "TSServerUrl": {
+            "type": "string"
+        },
+        "AgentPool": {
+            "type": "string"
+        },
+        "PAToken": {
+            "type": "string"
+        },        
+        "pfxBlobString": {
+            "type": "string"
+        },
+        "certificatePassword": {
+            "type": "securestring"
+        },
+        "certificateThumbprint": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+        "agentTemplateURL": "[uri(variables('baseUri'),'../ase-agent/azuredeploy.json')]",
+        "aseTemplateURL": "[uri(variables('baseUri'),'../ase/azuredeploy.json')]",
+        "vnetName": "asevnet",
+        "subnetName1": "subnet-1",
+        "subnetName2": "subnet-2",
+        "subnetId1": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName1'))]",
+        "subnetId2": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName2'))]",
+        "jumpVmName": "JumpBox",
+        "buildAgentVmName": "build-agent",
+        "AppDns": "[concat(parameters('siteName'),'.',parameters('domainName'))]",
+        "AseIp": "10.0.1.11"
+    },
+    "resources": [
+        {
+            "name": "[variables('vnetName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
+            "dependsOn": [],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName1')]",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnetName2')]",
+                        "properties": {
+                            "addressPrefix": "10.0.1.0/25"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat('jump',resourceGroup().name)]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('windowsVmTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[variables('jumpVmName')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('jumpVmSize')]"
+                    },
+                    "subnetId": {
+                        "value": "[variables('subnetId1')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "assignPublicIP": {
+                        "value": true
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat('agent',resourceGroup().name)]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('agentTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "TSServerUrl": {
+                        "value": "[parameters('TSServerUrl')]"
+                    },
+                    "AgentPool": {
+                        "value": "[parameters('AgentPool')]"
+                    },
+                    "PAToken": {
+                        "value": "[parameters('PAToken')]"
+                    },
+                    "AseIp": {
+                        "value": "[variables('AseIp')]"
+                    },
+                    "AppDns": {
+                        "value": "[variables('AppDns')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('buildAgentVmName')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('agentVmSize')]"
+                    },
+                    "subnetId": {
+                        "value": "[variables('subnetId1')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat('ase',resourceGroup().name)]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('aseTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "subnetId": {
+                        "value": "[variables('subnetId2')]"
+                    },
+                    "domainName": {
+                        "value": "[parameters('domainName')]"
+                    },
+                    "aseSiteName": {
+                        "value": "[parameters('siteName')]"
+                    },
+                    "pfxBlobString": {
+                        "value": "[parameters('pfxBlobString')]"
+                    },
+                    "certificatePassword": {
+                        "value": "[parameters('certificatePassword')]"
+                    },
+                    "certificateThumbprint": {
+                        "value": "[parameters('certificateThumbprint')]"
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,141 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subnetId": {
+            "type": "string"
+        },
+        "vmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "EnterpriseAdmin"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "vmName": {
+            "type": "string",
+            "defaultValue": "ase-build-agent"
+        },
+        "ImagePublisher": {
+            "type": "string",
+            "defaultValue": "MicrosoftVisualStudio"
+        },
+        "ImageOffer": {
+            "type": "string",
+            "defaultValue": "VisualStudio"
+        },
+        "ImageSku": {
+            "type": "string",
+            "defaultValue": "VS-2017-Ent-Latest-WS2016"
+        },
+        "TSServerUrl": {
+            "type": "string"
+        },
+        "AgentPool": {
+            "type": "string"
+        },
+        "PAToken": {
+            "type": "string"
+        },
+        "AseIp": {
+            "type": "string"
+        },
+        "AppDns": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+        "AgentConfigureModuleURL": "[uri(variables('baseUri'), 'DSC/ConfigureASEBuildAgent.ps1.zip')]",
+        "AgentConfigureFunction": "ConfigureASEBuildAgent.ps1\\ConfigureASEBuildAgentDsc",
+        "agentDownloadUrl": "https://vstsagentpackage.azureedge.net/agent/2.127.0/vsts-agent-win-x64-2.127.0.zip",
+
+    },
+    "resources": [
+        {
+            "name": "AgentVM",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('windowsVmTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "subnetId": {
+                        "value": "[parameters('subnetId')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "assignPublicIP": {
+                        "value": false
+                    },
+                    "imagePublisher": {
+                        "value": "[parameters('ImagePublisher')]"
+                    },
+                    "imageOffer": {
+                        "value": "[parameters('ImageOffer')]"
+                    },
+                    "imageSku": {
+                        "value": "[parameters('ImageSku')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'), '/configureagent')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'AgentVM')]"
+            ],
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.21",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "modulesURL": "[variables('AgentConfigureModuleURL')]",
+                    "configurationFunction": "[variables('AgentConfigureFunction')]",
+                    "properties": {
+                        "TSUrl": "[parameters('TSServerUrl')]",
+                        "VSTSAgentUrl": "[variables('agentDownloadUrl')]",
+                        "AgentPool": "[parameters('AgentPool')]",
+                        "PAToken": "[parameters('PAToken')]",
+                        "AseIp": "[parameters('AseIp')]",
+                        "AppDns": "[parameters('AppDns')]"
+                    }
+                }
+            }
+        }
+    ]
+}
