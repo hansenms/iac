@@ -70,7 +70,7 @@
     },
     "resources": [
         {
-            "name": "AgentDeploy",
+            "name": "AgentVM",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "properties": {
