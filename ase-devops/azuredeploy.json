@@ -76,8 +76,8 @@
         "vnetName": "ase-vnet",
         "subnetName1": "subnet-1",
         "subnetName2": "subnet-2",
-        "subnetId1": "[concat(resourceId('Microsoft.Network/virtualNetwork', variables('vnetName')), '/subnets/', variables('subnetName1'))]",
-        "subnetId2": "[concat(resourceId('Microsoft.Network/virtualNetwork', variables('vnetName')), '/subnets/', variables('subnetName2'))]",
+        "subnetId1": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName1'))]",
+        "subnetId2": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName2'))]",
         "jumpVmName": "JumpBox",
         "AppDns": "[concat(parameters('siteName'),'.',parameters('domainName'))]",
         "AseIp": "10.0.1.11"
