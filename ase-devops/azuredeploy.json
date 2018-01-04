@@ -76,8 +76,8 @@
         "vnetName": "asevnet",
         "subnetName1": "subnet-1",
         "subnetName2": "subnet-2",
-        "subnetId1": "BLAH",
-        "subnetId2": "BLAH2",
+        "subnetId1": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName1'))]",
+        "subnetId2": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName2'))]",
         "jumpVmName": "JumpBox",
         "AppDns": "[concat(parameters('siteName'),'.',parameters('domainName'))]",
         "AseIp": "10.0.1.11"
@@ -186,41 +186,6 @@
                     },
                     "adminPassword": {
                         "value": "[parameters('adminPassword')]"
-                    }
-                }
-            }
-        },
-        {
-            "name": "AseDeploy",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('aseTemplateURL')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "subnetId": {
-                        "value": "[variables('subnetId2')]"
-                    },
-                    "domainName": {
-                        "value": "[parameters('domainName')]"
-                    },
-                    "aseSiteName": {
-                        "value": "[parameters('siteName')]"
-                    },
-                    "pfxBlobString": {
-                        "value": "[parameters('pfxBlobString')]"
-                    },
-                    "certificatePassword": {
-                        "value": "[parameters('certificatePassword')]"
-                    },
-                    "certificateThumbprint": {
-                        "value": "[parameters('certificateThumbprint')]"
                     }
                 }
             }
