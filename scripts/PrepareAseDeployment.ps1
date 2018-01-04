@@ -1,3 +1,4 @@
+[CmdletBinding(DefaultParameterSetName="nodevops")]
 param(
     [Parameter(Mandatory=$false)]
     [String]$CertificatePath,
@@ -7,6 +8,21 @@ param(
 
     [Parameter(Mandatory)]
     [securestring]$CertificatePassword,
+
+    [Parameter(Mandatory=$false,ParameterSetName="devops")]
+    [String]$AdminUsername = "EnterpriseAdmin",
+
+    [Parameter(Mandatory=$true,ParameterSetName="devops")]
+    [securestring]$AdminPassword,
+   
+    [Parameter(Mandatory=$true,ParameterSetName="devops")]
+    [String]$TSServerUrl,
+
+    [Parameter(Mandatory=$true,ParameterSetName="devops")]
+    [String]$AgentPool,
+
+    [Parameter(Mandatory=$true,ParameterSetName="devops")]
+    [String]$PAToken,
 
     [Parameter(Mandatory=$false)]
     [String]$OutFile = ".\azuredeploy.parameters.json"
@@ -42,6 +58,15 @@ $templateParameters = @{
         "value" = $certificate.Thumbprint
     }
 }
+
+if (-not [String]::IsNullOrEmpty($AdminPassword)) {
+    $templateParameters.Add("AdminUsername", @{ "value" = $AdminUsername})
+    $templateParameters.Add("AdminPassword", @{ "value" = (New-Object PSCredential "user", $AdminPassword).GetNetworkCredential().Password})
+    $templateParameters.Add("TSServerUrl", @{ "value" = $TSServerUrl})
+    $templateParameters.Add("AgentPool", @{ "value" = $AgentPool})
+    $templateParameters.Add("PAToken", @{ "value" = $PAToken})
+}
+
 
 $templateParameters | ConvertTo-Json -Depth 10 | Out-File $OutFile
 
