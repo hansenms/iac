@@ -114,7 +114,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('vmName'), '/configureagent')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'AgentDeploy')]"
+                "[resourceId('Microsoft.Resources/deployments', 'AgentVM')]"
             ],
             "apiVersion": "2016-03-30",
             "location": "[resourceGroup().location]",
