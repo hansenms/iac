@@ -73,7 +73,7 @@
         "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
         "agentTemplateURL": "[uri(variables('baseUri'),'../ase-agent/azuredeploy.json')]",
         "aseTemplateURL": "[uri(variables('baseUri'),'../ase/azuredeploy.json')]",
-        "vnetName": "ase-vnet",
+        "vnetName": "asevnet",
         "subnetName1": "subnet-1",
         "subnetName2": "subnet-2",
         "subnetId1": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName1'))]",
