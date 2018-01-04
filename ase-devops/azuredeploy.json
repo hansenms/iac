@@ -189,6 +189,41 @@
                     }
                 }
             }
+        },
+        {
+            "name": "AseDeploy",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('aseTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "subnetId": {
+                        "value": "[variables('subnetId2')]"
+                    },
+                    "domainName": {
+                        "value": "[parameters('domainName')]"
+                    },
+                    "aseSiteName": {
+                        "value": "[parameters('siteName')]"
+                    },
+                    "pfxBlobString": {
+                        "value": "[parameters('pfxBlobString')]"
+                    },
+                    "certificatePassword": {
+                        "value": "[parameters('certificatePassword')]"
+                    },
+                    "certificateThumbprint": {
+                        "value": "[parameters('certificateThumbprint')]"
+                    }
+                }
+            }
         }
     ]
 }
