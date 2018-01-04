@@ -186,9 +186,6 @@
                     },
                     "adminPassword": {
                         "value": "[parameters('adminPassword')]"
-                    },
-                    "assignPublicIP": {
-                        "value": true
                     }
                 }
             }
