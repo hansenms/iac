@@ -141,7 +141,7 @@
             "type": "Microsoft.Web/hostingEnvironments",
             "apiVersion": "2016-09-01",
             "dependsOn": [
-                "[variables('vnetId')]"
+                "[variables('genVnetId')]"
             ],
             "kind": "ASEV2",
             "location": "[variables('locationLUT')[resourceGroup().location]]",
