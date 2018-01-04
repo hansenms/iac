@@ -13,6 +13,8 @@ The ASE needs a certificate, which supports the *.domainname, and *.scm.domainna
 
 This will generate a parameter file that you can use to either copy/paste from or with a CLI or Powershell command to deploy the template. 
 
+Note: It would be possible (and better) to deploy the certificate using Key Vault, but this workflow is not supported in all clouds (including sovereign clouds); for compatibility reasons, the certificate is passed as a string blob in this template.
+
 Please not that ASE is not yet available in Azure Government, hence to Azure Government deploy button. 
 
 <a href="https://transmogrify.azurewebsites.net/ase/azuredeploy.json" target="_blank">
