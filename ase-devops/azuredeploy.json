@@ -116,7 +116,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "dependsOn": [
-                "[resourceId('Microsoft.Networks/virtualNetworks',variables('vnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -151,7 +151,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "dependsOn": [
-                "[resourceId('Microsoft.Networks/virtualNetworks',variables('vnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -198,7 +198,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "dependsOn": [
-                "[resourceId('Microsoft.Networks/virtualNetworks',variables('vnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
