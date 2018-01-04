@@ -112,7 +112,7 @@
             }
         },
         {
-            "name": "JumpDeploy",
+            "name": "[concat('jump',resourceGroup().name)]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "dependsOn": [
@@ -147,7 +147,7 @@
             }
         },
         {
-            "name": "AgentDeploy",
+            "name": "[concat('agent',resourceGroup().name)]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "dependsOn": [
@@ -191,7 +191,7 @@
             }
         },
         {
-            "name": "AseDeploy",
+            "name": "[concat('ase',resourceGroup().name)]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2017-05-10",
             "dependsOn": [
