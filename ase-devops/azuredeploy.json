@@ -79,7 +79,7 @@
         "subnetId1": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName1'))]",
         "subnetId2": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName2'))]",
         "jumpVmName": "JumpBox",
-        "buildAgentVmName": "[concat('agent-', resourceGroup().name)]",
+        "buildAgentVmName": "build-agent",
         "AppDns": "[concat(parameters('siteName'),'.',parameters('domainName'))]",
         "AseIp": "10.0.1.11"
     },
