@@ -1,4 +1,4 @@
-configuration Sample_xWebsite_NewWebsite
+configuration ConfigureWebDsc
 {
     param
     (
@@ -7,7 +7,7 @@ configuration Sample_xWebsite_NewWebsite
     # Import the module that defines custom resources
     Import-DscResource -Module xWebAdministration, PSDesiredStateConfiguration
 
-    Node $NodeName
+    Node localhost
     {
         WindowsFeature IIS
         {
