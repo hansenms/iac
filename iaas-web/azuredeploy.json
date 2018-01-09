@@ -1,0 +1,102 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "EnterpriseAdmin"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "vmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        },
+        "vmName": {
+            "type": "string",
+            "defaultValue": "webServer"
+        },
+        "assignPublicIp": {
+            "type": "bool",
+            "defaultValue": false
+        },
+        "subnetId": {
+            "type": "string",
+            "defaultValue": "null"
+        }
+    },
+    "variables": {
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "windowsVmTemplateURL": "[uri(variables('baseUri'),'../primitives/windowsvm.json')]",
+        "webConfigureModuleURL": "[uri(variables('baseUri'), 'DSC/ConfigureWeb.ps1.zip')]",
+        "webConfigureFunction": "ConfigureWeb.ps1\\ConfigureWebDsc"
+    },
+    "resources": [
+        {
+            "name": "WebVmDeploy",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('windowsVmTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "subnetId": {
+                        "value": "[parameters('subnetId')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "assignPublicIP": {
+                        "value": "[parameters('assignPublicIp')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'), '/configureagent')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'WebVmDeploy')]"
+            ],
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.21",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "modulesURL": "[variables('webConfigureModuleURL')]",
+                    "configurationFunction": "[variables('webConfigureFunction')]",
+                    "properties": {
+                    }
+                }
+            }
+        }
+    ]
+}
