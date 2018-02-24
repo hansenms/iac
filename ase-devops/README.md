@@ -20,14 +20,10 @@ iac\scripts\PrepareAseDeployment.ps1 -DomainName mydomain-internal.us `
 
 The `AgentPool` and `PAToken` parameters need to be established in your VSTS or TFS instance in advance. The script will save all the parameters in a template parameter json file that you can copy/paste from or use directly with CLI or Powershell commands to deploy the template. 
 
-Please note that ASE is not yet available in Azure Government, hence no Deploy to Azure Government button.
-
 <a href="https://transmogrify.azurewebsites.net/ase-devops/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-<!--
 <a href="https://transmogrify.azurewebsites.net/ase-devops/azuredeploy.json?environment=gov" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
 </a>
--->

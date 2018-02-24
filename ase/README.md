@@ -15,14 +15,10 @@ This will generate a parameter file that you can use to either copy/paste from o
 
 Note: It would be possible (and better) to deploy the certificate using Key Vault, but this workflow is not supported in all clouds (including sovereign clouds); for compatibility reasons, the certificate is passed as a string blob in this template.
 
-Please note that ASE is not yet available in Azure Government, hence no Azure Government deploy button. 
-
 <a href="https://transmogrify.azurewebsites.net/ase/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-<!--
 <a href="https://transmogrify.azurewebsites.net/ase/azuredeploy.json?environment=gov" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
 </a>
--->

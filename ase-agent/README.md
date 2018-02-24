@@ -13,16 +13,11 @@ To ensure that the configuration of the agen is correct, you need to supply:
 * `AseIp`: The IP address of the ASE environment. 
 * `AppDns`: The DNS name of the app, e.g. myapp.contoso-internal.us
 
-
-ASE is currently not available in Azure Government, hence no Deploy to Azure Government button.
-
 <a href="https://transmogrify.azurewebsites.net/ase-agent/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-<!--
 <a href="https://transmogrify.azurewebsites.net/ase-agent/azuredeploy.json?environment=gov" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
 </a>
--->
  
