@@ -57,6 +57,9 @@ $templateParameters = @{
     "certificateThumbprint" = @{
         "value" = $certificate.Thumbprint
     }
+    "domainName" = @{
+        "value" = $DomainName
+    }
 }
 
 if (-not [String]::IsNullOrEmpty($AdminPassword)) {
