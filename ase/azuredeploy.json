@@ -68,7 +68,7 @@
         "lastSlash": "[lastIndexOf(variables('subnetId'),'/')]",
         "subnetName": "[substring(variables('subnetId'),add(variables('lastSlash'),1))]",
         "vnetId": "[substring(variables('subnetId'),0,sub(variables('lastSlash'),8))]",
-        "certName": "[concat(variables('DefaultCertificateFor_'), variables('aseName'), '_InternalLoadBalancingASE')]",
+        "certName": "[concat('DefaultCertificateFor_', variables('aseName'), '_InternalLoadBalancingASE')]",
         "appServicePlanName": "[concat(variables('aseName'),'-asp')]",
         "locationLUT": {
             "usgovvirginia": "USGov Virginia",
