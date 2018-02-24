@@ -12,7 +12,7 @@ The final deployment looks like this:
 A number of parameters (including SSL certificate) are needed for proper deployment of this pattern. To assist with preparing these parameters, there is a [convenience script](https://github.com/hansenms/iac/blob/master/scripts/PrepareAseDeployment.ps1). You need an SSL certificate to support the DNS names `*.domainname` and `*.scm.domainname`, if you don't have one, the script with create a self-signed certificate for you. You can call the script with:
 
 ```
-.\scripts\PrepareAseDeployment.ps1 -DomainName mydomain-internal.us `
+iac\scripts\PrepareAseDeployment.ps1 -DomainName mydomain-internal.us `
 -TSServerUrl "https://<VSTSPROJECT>.visualstudio.com" -AdminUsername EnterpriseAdmin`
 -AgentPool <NAME OF POOL> -PAToken <PA Token for VSTS/TFS> `
 -OutFile C:\temp\myase-devops.parameters.json

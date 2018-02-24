@@ -8,7 +8,7 @@ The template allows you to supply an existing Subnet for ASE deployment (there s
 The ASE needs a certificate, which supports the `*.domainname`, and `*.scm.domainname` DNS names. If you do not have a certificate, you can generate one with the `New-SelfSignedCertificate` command. The repository also includes a [convenience script](https://github.com/hansenms/iac/blob/master/scripts/PrepareAseDeployment.ps1), that prepares the details needed for this deployment. To use the script for this deployment:
 
 ```
-.\scripts\PrepareAseDeployment.ps1 -DomainName mydomain-internal.us -OutFile C:\temp\myase.parameters.json
+iac\scripts\PrepareAseDeployment.ps1 -DomainName mydomain-internal.us -OutFile C:\temp\myase.parameters.json
 ```
 
 This will generate a parameter file that you can use to either copy/paste from or with a CLI or Powershell command to deploy the template. 
