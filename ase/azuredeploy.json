@@ -57,6 +57,8 @@
         }
     },
     "variables": {
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "ilbCertTemplateURL": "[uri(variables('baseUri'),'nested-templates/ase-ilb-certificate.json')]",
         "aseName": "[concat('ASE', uniqueString(resourceGroup().id))]",
         "genVnetName": "[concat('ase-vnet',uniqueString(resourceGroup().id))]",
         "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
@@ -122,17 +124,16 @@
                 "subnets": [
                     {
                         "name": "[variables('genVnetSubnetName1')]",
-                        "properties" : {
+                        "properties": {
                             "addressPrefix": "10.0.0.0/24"
                         }
                     },
                     {
                         "name": "[variables('genVnetSubnetName2')]",
-                        "properties" : {
+                        "properties": {
                             "addressPrefix": "10.0.1.0/25"
                         }
                     }
-
                 ]
             }
         },
@@ -146,36 +147,49 @@
             "kind": "ASEV2",
             "location": "[variables('locationLUT')[resourceGroup().location]]",
             "properties": {
-              "name": "[variables('aseName')]",
-              "location": "[variables('locationLUT')[resourceGroup().location]]",
-              "virtualNetwork": {
-                "id": "[variables('vnetId')]",
-                "subnet": "[variables('subnetName')]"
-              },
-              "ipSslAddressCount": 0,
-              "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
-              "dnsSuffix": "[parameters('domainName')]",
-              "clusterSettings": [
-                    {
-                        "name": "DefaultSslCertificateThumbprint",
-                        "value": "[parameters('certificateThumbprint')]"
-                    }
-                ]
+                "name": "[variables('aseName')]",
+                "location": "[variables('locationLUT')[resourceGroup().location]]",
+                "virtualNetwork": {
+                    "id": "[variables('vnetId')]",
+                    "subnet": "[variables('subnetName')]"
+                },
+                "ipSslAddressCount": 0,
+                "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
+                "dnsSuffix": "[parameters('domainName')]"
             }
         },
         {
-            "apiVersion": "2016-03-01",
-            "type": "Microsoft.Web/certificates",
-            "name": "[variables('certName')]",
-            "location": "[variables('locationLUT')[resourceGroup().location]]",
+            "name": "SetILBCert",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                "[concat('Microsoft.Web/hostingEnvironments/', variables('aseName'))]"
             ],
             "properties": {
-                "pfxBlob": "[parameters('pfxBlobString')]",
-                "password": "[parameters('certificatePassword')]",
-                "hostingEnvironmentProfile": {
-                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('ilbCertTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServiceEnvironmentName": {
+                        "value": "[variables('aseName')]"
+                    },
+                    "existingAseLocation": {
+                        "value": "[variables('locationLUT')[resourceGroup().location]]"
+                    },
+                    "pfxBlobString": {
+                        "value": "[parameters('pfxBlobString')]"
+                    },
+                    "password": {
+                        "value": "[parameters('certificatePassword')]"
+                    },
+                    "certificateThumbprint": {
+                        "value": "[parameters('certificateThumbprint')]"
+                    },
+                    "certificateName": {
+                        "value": "[variables('certName')]"
+                    }
                 }
             }
         },
@@ -185,7 +199,8 @@
             "type": "Microsoft.Web/serverfarms",
             "location": "[variables('locationLUT')[resourceGroup().location]]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+                "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]",
+                "[resourceId('Microsoft.Resources/deployments', 'SetILBCert')]"
             ],
             "properties": {
                 "name": "[variables('appServicePlanName')]",
