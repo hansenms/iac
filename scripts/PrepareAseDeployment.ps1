@@ -41,7 +41,9 @@ if ([String]::IsNullOrEmpty($CertificatePath)) {
     $certThumbprint = "cert:\localMachine\my\" + $certificate.Thumbprint    
     Export-PfxCertificate -cert $certThumbprint -FilePath $CertificatePath -Password $CertificatePassword
 } else {
-    $certificate = Get-PfxCertificate -FilePath $CertificatePath -Password $CertificatePassword
+    $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+    $sp = (New-Object PSCredential "user", $CertificatePassword).GetNetworkCredential().Password
+    $certificate.Import($CertficatePath,$sp,'DefaultKeySet')
 }
 
 $fileContentBytes = Get-Content $CertificatePath -Encoding Byte
