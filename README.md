@@ -11,3 +11,4 @@ This repository contains a number of templates for deploying infrastructure in M
 * [ase](ase/) is a template for deploy Azure App Service Environment (ASE) into an existing or new Virtual Network.
 * [ase-agent](ase-agent/) is a template for deploying a VSTS/TFS build agent into a Virtual Network and let it deploy to a Web App in an App Service Environment (ASE).
 * [ase-devops](ase-devops/) is a combination of [ase](ase/) and [ase-agent](ase-agent/) to demonstrate the complete ASE VSTS/TFS DevOps experience. 
+
