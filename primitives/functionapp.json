@@ -93,7 +93,7 @@
             "kind": "functionapp",
             "properties": {
                 "name": "[variables('functionAppName')]",
-                "serverFarmId": "[variable('hostingPlanId')]",
+                "serverFarmId": "[variables('hostingPlanId')]",
                 "hostingEnvironment": "",
                 "clientAffinityEnabled": false,
                 "siteConfig": {
