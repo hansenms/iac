@@ -97,7 +97,15 @@
                 "hostingEnvironment": "",
                 "clientAffinityEnabled": false,
                 "siteConfig": {
-                    "alwaysOn": true
+                    "alwaysOn": true,
+                    "cors":{
+                        "allowedOrigins":[
+                            "https://functions.azure.com",
+                            "https://functions-staging.azure.com",
+                            "https://functions-next.azure.com",
+                            "https://functions-usgov-iowa.azurewebsites.us"                    
+                        ]
+                    }
                 }
             },
             "dependsOn": [
