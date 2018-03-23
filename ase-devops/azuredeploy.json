@@ -45,6 +45,10 @@
             "type": "string",
             "defaultValue": "contoso-internal.us"
         },
+        "aseName": {
+            "type": "string",
+            "defaultValue": "GENERATE"
+        },
         "siteName": {
             "type": "string",
             "defaultValue": "ase-site"
@@ -213,6 +217,9 @@
                     },
                     "domainName": {
                         "value": "[parameters('domainName')]"
+                    },
+                    "aseName": {
+                        "value": "[parameters('aseName')]"
                     },
                     "aseSiteName": {
                         "value": "[parameters('siteName')]"

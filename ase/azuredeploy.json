@@ -32,6 +32,10 @@
         "certificateThumbprint": {
             "type": "string"
         },
+        "aseName": {
+            "type": "string",
+            "defaultValue": "GENERATE"
+        },
         "aseSiteName": {
             "type": "string",
             "defaultValue": "ase-site"
@@ -59,7 +63,7 @@
     "variables": {
         "baseUri": "[deployment().properties.templateLink.uri]",
         "ilbCertTemplateURL": "[uri(variables('baseUri'),'nested-templates/ase-ilb-certificate.json')]",
-        "aseName": "[concat('ASE', uniqueString(resourceGroup().id))]",
+        "aseName": "[if(equals(parameters('aseName'),'GENERATE'),concat('ASE', uniqueString(resourceGroup().id)), parameters('aseName'))]",
         "genVnetName": "[concat('ase-vnet',uniqueString(resourceGroup().id))]",
         "genVnetid": "[resourceId('Microsoft.Network/virtualNetworks', variables('genVnetName'))]",
         "genVnetSubnetName1": "default",
