@@ -104,5 +104,23 @@ configuration ConfigureASEBuildAgentDsc
             IPAddress = $AseIp
             Ensure    = 'Present'
         }
+
+        Registry StrongCrypto1
+        {
+            Ensure      = "Present"
+            Key         = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\.NETFramework\v4.0.30319"
+            ValueName   = "SchUseStrongCrypto"
+            ValueType   = "Dword"
+            ValueData   = "00000001"
+        }
+
+        Registry StrongCrypto2
+        {
+            Ensure      = "Present"
+            Key         = "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319"
+            ValueName   = "SchUseStrongCrypto"
+            ValueType   = "Dword"
+            ValueData   = "00000001"
+        }
     }
 }
