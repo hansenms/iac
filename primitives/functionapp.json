@@ -103,7 +103,9 @@
                             "https://functions.azure.com",
                             "https://functions-staging.azure.com",
                             "https://functions-next.azure.com",
-                            "https://functions-usgov-iowa.azurewebsites.us"                    
+                            "https://functions-usgov-iowa.azurewebsites.us",
+                            "https://functions-usgov-texas.azurewebsites.us",
+                            "https://functions.ext.azure.us"                    
                         ]
                     }
                 }
