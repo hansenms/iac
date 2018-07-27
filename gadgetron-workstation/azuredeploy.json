@@ -94,10 +94,9 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "https://raw.githubusercontent.com/hansenms/cloud/master/azure/idea_install/pcks.txt",
-                        "https://raw.githubusercontent.com/hansenms/cloud/master/azure/idea_install/setup_mars.sh"
+                        "[variables('gadgetronConfigScriptURL')]"
                     ],
-                    "commandToExecute": "bash ./setup_mars.sh pcks.txt"
+                    "commandToExecute": "bash ./setup_gadgetron_workstation.sh"
                 }
             }
         }
