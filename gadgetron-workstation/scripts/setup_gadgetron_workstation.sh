@@ -8,9 +8,9 @@ cython emacs python-dev python-pip python3-dev python3-pip \
 libhdf5-serial-dev cmake git-core libboost-all-dev libfftw3-dev \ 
 h5utils jq hdf5-tools liblapack-dev libopenblas-base libopenblas-dev \ 
 libxml2-dev libfreetype6-dev pkg-config libxslt-dev libarmadillo-dev \ 
-libace-dev gcc-multilib libgtest-dev python3-dev liblapack-dev liblapacke-dev \
-libplplot-dev libdcmtk-dev cmake-curses-gui neofetch net-tools cpio \
-x2goserver ubuntu-mate-core
+libace-dev gcc-multilib libgtest-dev python3-dev liblapack-dev liblapacke-dev \ 
+libplplot-dev libdcmtk-dev cmake-curses-gui cmake neofetch net-tools cpio \ 
+x2goserver ubuntu-mate-core emacs
 
 
 pip install --upgrade pip
@@ -51,5 +51,5 @@ tar zxf ceres-solver-1.14.0.tar.gz && \
 mkdir ceres-bin && \
 cd ceres-bin && \
 cmake ../ceres-solver-1.14.0 && \
-make -j16 && \
+make -j $(nproc) && \
 make install
