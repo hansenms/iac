@@ -6,6 +6,9 @@
             "type": "string",
             "defaultValue": "azureuser"
         },
+        "sshKeyData": {
+            "type": "string"
+        },
         "vmSize": {
             "type": "string",
             "allowedValues": [
@@ -62,6 +65,9 @@
                     },
                     "adminUsername": {
                         "value": "[parameters('adminUsername')]"
+                    },
+                    "sshKeyData": {
+                        "value": "[parameters('sshKeyData')]"
                     },
                     "assignPublicIP": {
                         "value": "[parameters('assignPublicIp')]"
