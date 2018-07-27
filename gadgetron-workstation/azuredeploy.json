@@ -1,0 +1,73 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "azureuser"
+        },
+        "vmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS1_v2",
+                "Standard_DS2_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2"
+            ],
+            "defaultValue": "Standard_DS2_v2"
+        },
+        "vmName": {
+            "type": "string",
+            "defaultValue": "GadgetronWorkstation"
+        },
+        "assignPublicIp": {
+            "type": "bool",
+            "defaultValue": true
+        },
+        "subnetId": {
+            "type": "string",
+            "defaultValue": "null"
+        }
+    },
+    "variables": {
+        "baseUri": "[deployment().properties.templateLink.uri]",
+        "vmTemplateURL": "[uri(variables('baseUri'),'../primitives/linuxvm.json')]"
+    },
+    "resources": [
+        {
+            "name": "GadgetronVmDeploy",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "subnetId": {
+                        "value": "[parameters('subnetId')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "assignPublicIP": {
+                        "value": "[parameters('assignPublicIp')]"
+                    }
+                }
+            }
+        }
+    ]
+}
