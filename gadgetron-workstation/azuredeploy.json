@@ -40,7 +40,8 @@
     },
     "variables": {
         "baseUri": "[deployment().properties.templateLink.uri]",
-        "vmTemplateURL": "[uri(variables('baseUri'),'../primitives/linuxvm.json')]"
+        "vmTemplateURL": "[uri(variables('baseUri'),'../primitives/linuxvm.json')]",
+        "gadgetronConfigScriptURL": "[uri(variables('baseUri'), 'scripts/setup_gadgetron_workstation.sh')]"
     },
     "resources": [
         {
@@ -72,6 +73,31 @@
                     "assignPublicIP": {
                         "value": "[parameters('assignPublicIp')]"
                     }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'), '/', '/configuregadgetron')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2018-06-01",
+            "dependsOn": [
+                "['Microsoft.Resources/deployments/GadgetronVmDeploy']"
+            ],
+            "tags": {
+                "displayName": "gadgetronsetup"
+            },
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "https://raw.githubusercontent.com/hansenms/cloud/master/azure/idea_install/pcks.txt",
+                        "https://raw.githubusercontent.com/hansenms/cloud/master/azure/idea_install/setup_mars.sh"
+                    ],
+                    "commandToExecute": "bash ./setup_mars.sh pcks.txt"
                 }
             }
         }

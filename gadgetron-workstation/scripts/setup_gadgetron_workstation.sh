@@ -20,7 +20,7 @@ apt-get install --no-install-recommends --no-install-suggests --yes python3-pil
 apt-get install --no-install-recommends --no-install-suggests --yes python3-scipy
 apt-get install --no-install-recommends --no-install-suggests --yes python3-configargparse
 pip install Cython tk-tools matplotlib scikit-image opencv_python pydicom scikit-learn
-pip uninstall h5py
+pip uninstall -y h5py
 apt-get install -y python3-h5py
 pip install --upgrade tensorflow
 pip install http://download.pytorch.org/whl/cpu/torch-0.4.0-cp36-cp36m-linux_x86_64.whl 
