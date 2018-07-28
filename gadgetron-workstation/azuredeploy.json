@@ -98,7 +98,7 @@
                         "[variables('gadgetronConfigScriptURL')]",
                         "[variables('gadgetronBootstrapScriptURL')]" 
                     ],
-                    "commandToExecute": "[concat('bash ./setup_gadgetron_workstation.sh && sudo -H -u ', parameters('adminUsername'), ' bash -c bootstrap_gadgetron.sh')]"
+                    "commandToExecute": "[concat('bash ./setup_gadgetron_workstation.sh && cp ./bootstrap_gadgetron.sh /home/', variables('adminUsername'), '/ && chown ', variables('adminUsername'), ':', variables('adminUsername'), '/home/', variables('adminUsername'), '/bootstrap_gadgetron.sh')]"
                 }
             }
         }
