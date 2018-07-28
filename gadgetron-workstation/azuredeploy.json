@@ -41,7 +41,8 @@
     "variables": {
         "baseUri": "[deployment().properties.templateLink.uri]",
         "vmTemplateURL": "[uri(variables('baseUri'),'../primitives/linuxvm.json')]",
-        "gadgetronConfigScriptURL": "[uri(variables('baseUri'), 'scripts/setup_gadgetron_workstation.sh')]"
+        "gadgetronConfigScriptURL": "[uri(variables('baseUri'), 'scripts/setup_gadgetron_workstation.sh')]",
+        "gadgetronBoostrapScriptURL": "[uri(variables('baseUri'), 'scripts/bootstrap_gadgetron.sh')]"
     },
     "resources": [
         {
@@ -94,9 +95,10 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[variables('gadgetronConfigScriptURL')]"
+                        "[variables('gadgetronConfigScriptURL')]",
+                        "[variables('gadgetronBootstrapScriptURL')]" 
                     ],
-                    "commandToExecute": "bash ./setup_gadgetron_workstation.sh"
+                    "commandToExecute": "[concat('bash ./setup_gadgetron_workstation.sh && sudo -H -u ', parameters('adminUsername'), ' bash -c gadgetron_bootstrap.sh')]"
                 }
             }
         }
