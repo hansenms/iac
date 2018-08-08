@@ -17,7 +17,7 @@ make -j $(nproc)
 make install
 
 #GADGETRON
-cdd ${HOME}/code
+cd ${HOME}/code
 git clone https://github.com/gadgetron/gadgetron
 cd gadgetron
 mkdir build
